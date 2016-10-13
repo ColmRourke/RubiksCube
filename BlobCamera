@@ -107,3 +107,7 @@ text("x-> " + bs.getCentroidX(i) + "\n" + "y-> " + bs.getCentroidY(i), bs.getCen
  // }
   
 }
+
+
+
+//color c = img.pixels[loc];       // Grab the color
