@@ -35,9 +35,10 @@ void setup(){
     noFill();
     PFont f= createFont("", 10);
     textFont(f, 10);
-    bs = new Detector(this,140); //perhaps threshold
-    video = new Capture(this, "name=/dev/video1,size=320x240,fps=30");
-     video.filter(THRESHOLD);
+    bs = new Detector(this,255); //perhaps threshold
+    //video = new Capture(this, "name=/dev/video1,size=320x240,fps=30");
+    video=new Capture(this, 320,240);
+    // video.filter(THRESHOLD);
     opencv = new OpenCV(this, 640/2, 480/2);
     video.start();
   //  blobs = loadImage("blobs.jpg");
@@ -47,11 +48,14 @@ void setup(){
  
 void draw(){
     scale(2);
-    if(millis()-time>=wait){
+   // if(millis()-time>=wait){
 
       video.read();
-   //   video.filter(THRESHOLD);
       image(video,  0, 0);   
+      video.filter(THRESHOLD);
+      video.filter(BLUR,0.5);
+      video.loadPixels();
+
       bs.imageFindBlobs(video);
       bs.loadBlobsFeatures();
       bs.weightBlobs(false); 
@@ -81,13 +85,15 @@ strokeWeight(5);
 //...computes and prints the centroid coordinates x y to the console...
 println("BLOB " + (i+1) + " CENTROID X COORDINATE IS " + bs.getCentroidX(i));
 println("BLOB " + (i+1) + " CENTROID Y COORDINATE IS " + bs.getCentroidY(i));
+println("BLOB " + (i+1) + " WIDTH IS " + bs.getBlobWidth(i)); 
+println("BLOB " + (i+1) + " HEIGHT IS " + bs.getBlobHeight(i)); 
  
 //...and draws a point to their location. 
 point(bs.getCentroidX(i), bs.getCentroidY(i));
 
 //Write coordinate to the screen.
 fill(255, 0, 0);
-text("x-> " + bs.getCentroidX(i) + "\n" + "y-> " + bs.getCentroidY(i), bs.getCentroidX(i), bs.getCentroidY(i)-7);
+text("x-> " + bs.getCentroidX(i) + "\n" + "y-> " + bs.getCentroidY(i), bs.getCentroidX(i), bs.getCentroidY(i));
 
 }
 //println(bs.version()); 
@@ -98,6 +104,6 @@ text("x-> " + bs.getCentroidX(i) + "\n" + "y-> " + bs.getCentroidY(i), bs.getCen
 //      point(pixloc[i].x , pixloc[i].y );
  //     }
  //     }
-  }
+ // }
   
 }
