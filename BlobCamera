@@ -1,0 +1,103 @@
+/* 
+ * Blobscanner v. 0.2-a 
+ * by Antonio Molinaro (c) 20/07/2014.
+ * Method usage example:  
+ * getBlobPixelsLocation(int blobnumber)
+ *
+ * Computes and returns the coordinates of all the
+ * pixels in the specified blob.
+ * <code>findBlobs()</code> or <code>imageFindBlobs(PImage)</code>,
+ * <code>weightBlobs(boolean)</code>,
+ * and <code>loadBlobsFeatures()</code> methods
+ * must be called before to call this method.
+ * @param blobnumber The blob for which the pixels
+ * coordinates are computed.
+ * @return pixelsCoordinates The array of PVector objects
+ * containing the blob pixels coordinates.
+ */
+  
+  import gab.opencv.*;
+  import blobscanner.*; 
+  import processing.video.*;
+  import java.awt.*;
+  //PImage blobs;
+  Detector bs;
+  Capture video;
+  OpenCV opencv;
+  int time = millis();
+  int wait = 50;
+//  int[] seconds = new int[60];
+  int bn;
+  int thresh = 70;
+   PFont f;
+void setup(){
+    size(640, 480);
+    noFill();
+    PFont f= createFont("", 10);
+    textFont(f, 10);
+    bs = new Detector(this,140); //perhaps threshold
+    video = new Capture(this, "name=/dev/video1,size=320x240,fps=30");
+     video.filter(THRESHOLD);
+    opencv = new OpenCV(this, 640/2, 480/2);
+    video.start();
+  //  blobs = loadImage("blobs.jpg");
+  //  image(blobs,0,0); 
+    frameRate(20);
+}
+ 
+void draw(){
+    scale(2);
+    if(millis()-time>=wait){
+
+      video.read();
+   //   video.filter(THRESHOLD);
+      image(video,  0, 0);   
+      bs.imageFindBlobs(video);
+      bs.loadBlobsFeatures();
+      bs.weightBlobs(false); 
+    //Computes the blob center of mass.
+      bs.findCentroids();
+ 
+
+    
+    //  println("blob " + bn + " painted...");
+    //  bn = frameCount;//syncronize bn with frameCount
+     // PVector[] pixloc = bs.getBlobPixelsLocation(frameCount);
+      //if all blobs in the image have been painted, then reset all
+  //    if(bn==bs.getBlobsNumber()){ 
+ //     bn = 0; 
+ //   frameCount = 0;
+//  }
+    
+      
+      stroke(255,215,0);
+      strokeWeight(1);
+      //For each blob in the image..
+for(int i = 0; i < bs.getBlobsNumber(); i++) {
+  
+stroke(0, 255, 0);
+strokeWeight(5);
+  
+//...computes and prints the centroid coordinates x y to the console...
+println("BLOB " + (i+1) + " CENTROID X COORDINATE IS " + bs.getCentroidX(i));
+println("BLOB " + (i+1) + " CENTROID Y COORDINATE IS " + bs.getCentroidY(i));
+ 
+//...and draws a point to their location. 
+point(bs.getCentroidX(i), bs.getCentroidY(i));
+
+//Write coordinate to the screen.
+fill(255, 0, 0);
+text("x-> " + bs.getCentroidX(i) + "\n" + "y-> " + bs.getCentroidY(i), bs.getCentroidX(i), bs.getCentroidY(i)-7);
+
+}
+//println(bs.version()); 
+
+      //paints all the pixels inside the current blob (bn)
+ //     if(pixloc != null){
+//     for(int i = 0; i < pixloc.length; i++){
+//      point(pixloc[i].x , pixloc[i].y );
+ //     }
+ //     }
+  }
+  
+}
