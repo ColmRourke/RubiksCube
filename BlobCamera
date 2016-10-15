@@ -22,7 +22,7 @@
   import java.awt.*;
   //PImage blobs;
   Detector bs;
-  Capture video,video2;
+  Capture video;
   OpenCV opencv;
   int time = millis();
   int wait = 50;
@@ -40,8 +40,8 @@ void setup(){
     textFont(f, 10);
     bs = new Detector(this,255);  
     video = new Capture(this, "name=/dev/video1,size=320x240,fps=30");
-    //video=new Capture(this, 320,240);
-    opencv = new OpenCV(this, 640/2, 480/2);
+   // video=new Capture(this, 320,240);
+   // opencv = new OpenCV(this, 640/2, 480/2);
     video.start();
     frameRate(20);
 }
@@ -53,31 +53,33 @@ void draw(){
       video.read();
       image(video,  0,0);   
     //  video.filter(THRESHOLD);
-    //  video.filter(THRESHOLD,0.5);
+     // video.filter(THRESHOLD,.5);
       video.loadPixels();
+      video.updatePixels();
 
       bs.imageFindBlobs(video);
       bs.loadBlobsFeatures();
       bs.weightBlobs(false); 
     //Computes the blob center of mass.
       bs.findCentroids();
- 
 
     
-    //  println("blob " + bn + " painted...");
-    //  bn = frameCount;//syncronize bn with frameCount
-     // PVector[] pixloc = bs.getBlobPixelsLocation(frameCount);
-      //if all blobs in the image have been painted, then reset all
-  //    if(bn==bs.getBlobsNumber()){ 
- //     bn = 0; 
- //   frameCount = 0;
-//  }
-    
-     // opencv.loadImage(video);
+
       stroke(255,215,0);
       strokeWeight(1);
-      //For each blob in the image..
-for(int i = 0; i < bs.getBlobsNumber(); i++) {
+      getColours();
+      
+
+
+  
+}
+
+
+
+void getColours()
+{
+  //For each blob in the image..
+  for(int i = 0; i < bs.getBlobsNumber(); i++) {
   
 stroke(0, 255, 0);
 strokeWeight(5);
@@ -85,9 +87,13 @@ color c=video.get(int(bs.getCentroidX(i)),int(bs.getCentroidY(i)));
 //color c=video.pixels[int(bs.getCentroidX(i))+int(bs.getCentroidY(i))*video.width];
 float r=red(c);
 float g=green(c);
-float b=blue(c);
-//if(r>200){
-println("BLOB " + (i+1) + " Colour is " + r +","+g+","+b+""); 
+float blue=blue(c);
+float h= hue(c);
+float s=saturation(c);
+float b=brightness(c);
+//if(h>18&&h<20){
+println("BLOB " + (i+1) + " Colour is " + r +","+g+","+blue);
+println(" : hue:"+ h+" : Saturation: "+ s+" : Brightness: "+ b); 
 //...computes and prints the centroid coordinates x y to the console...
 println("BLOB " + (i+1) + " CENTROID X COORDINATE IS " + bs.getCentroidX(i));
 println("BLOB " + (i+1) + " CENTROID Y COORDINATE IS " + bs.getCentroidY(i));
@@ -99,22 +105,14 @@ point(bs.getCentroidX(i), bs.getCentroidY(i));
 
 //Write coordinate to the screen.
 fill(255, 0, 0);
-//text("x-> " + bs.getCentroidX(i) + "\n" + "y-> " + bs.getCentroidY(i), bs.getCentroidX(i), bs.getCentroidY(i));
-
-}
+text("x-> " + bs.getCentroidX(i) + "\n" + "y-> " + bs.getCentroidY(i), bs.getCentroidX(i), bs.getCentroidY(i));
+//blue h<160&&h>110&&s>254
+//red (h<255&&h>190)  must shine light on it
+//yellow (h<60&&h>30) works really well!!
+//white (h<160&&h>152&&s<80&&s>72) too many dots,,,(h<165&&h>150&&s<95&&s>90)
+//green
+//orange (h>18&&h<20)  too many dots
 //}
-//println(bs.version()); 
-
-      //paints all the pixels inside the current blob (bn)
- //     if(pixloc != null){
-//     for(int i = 0; i < pixloc.length; i++){
-//      point(pixloc[i].x , pixloc[i].y );
- //     }
- //     }
- // }
+}
   
 }
-
-
-
-//color c = img.pixels[loc];       // Grab the color
