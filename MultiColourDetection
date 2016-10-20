@@ -21,7 +21,7 @@ import java.awt.Rectangle;
 Capture video,cam;
 OpenCV opencv;
 PImage src;
-ArrayList<Contour> contours;
+ArrayList<Contour> contoursYellow, contoursRed, contoursOrange, contoursBlue, contoursGreen, contoursWhite;
 
 // <1> Set the range of Hue values for our filter
 //ArrayList<Integer> colors;
@@ -39,21 +39,28 @@ void setup() {
   noFill();
   String[] cameras = Capture.list();
   
-  if (cameras.length == 0) {
-    println("There are no cameras available for capture.");
-    exit();
-  } else {
-    println("Available cameras:");
-    for (int i = 0; i < cameras.length; i++) {
-      println(cameras[i]);
-    }
-  }      
- // video = new Capture(this, "name=/dev/video1,size=640x480,fps=30");
-  video = new Capture(this,640,480);
-  
+  //if (cameras.length == 0) {
+  //  println("There are no cameras available for capture.");
+  //  exit();
+  //} else {
+  //  println("Available cameras:");
+  //  for (int i = 0; i < cameras.length; i++) {
+  //    println(cameras[i]);
+  //  }
+  //}      
+  video = new Capture(this, "name=/dev/video1,size=640x480,fps=30");
+ // video = new Capture(this,640,480);
+    video.start();
+    delay(500);
   opencv = new OpenCV(this, 640,480);
-  video.start();
-  contours = new ArrayList<Contour>();
+  delay(500);
+
+  contoursRed = new ArrayList<Contour>();
+  contoursYellow = new ArrayList<Contour>();
+  contoursOrange = new ArrayList<Contour>();
+  contoursBlue = new ArrayList<Contour>();
+  contoursGreen = new ArrayList<Contour>();
+  contoursWhite = new ArrayList<Contour>();
   
   
   
@@ -70,11 +77,13 @@ void draw() {
   
   background(150);
   
-  if (video.available()) {
+//  if (video.available()) {
     video.read();
-    
-  }
-
+    image(video,0,0);
+    video.loadPixels();
+    video.updatePixels();
+//  }
+  
   // <2> Load the new frame of our movie in to OpenCV
   opencv.loadImage(video);
   
@@ -109,7 +118,14 @@ void draw() {
     text("Red,Yellow,Orange,Blue,Green,White", 10, 45);
   }
   
-  displayContoursBoundingBoxes();
+
+  displayContoursBoundingBoxesRed();
+  displayContoursBoundingBoxesYellow();
+  displayContoursBoundingBoxesOrange();
+  displayContoursBoundingBoxesBlue();
+  displayContoursBoundingBoxesGreen();
+  displayContoursBoundingBoxesWhite();
+    
 }
 
 //////////////////////
@@ -148,19 +164,52 @@ void detectColors() {
   
   // <7> Find contours in our range image.
   //     Passing 'true' sorts them by descending area.
-  if (outputs[i] != null) {
+  if (outputs[0] != null) {
     
-    opencv.loadImage(outputs[i]);
+    opencv.loadImage(outputs[0]);
     
-    contours = opencv.findContours(true,true);
-  }}
+    contoursRed = opencv.findContours(true,true);
+     //displayContoursBoundingBoxesRed();
+  }
+   if (outputs[1] != null) {
+    
+       opencv.loadImage(outputs[1]);
+    
+       contoursYellow = opencv.findContours(true,true);
+  }
+  if (outputs[2] != null) {
+    
+    opencv.loadImage(outputs[2]);
+    
+    contoursOrange = opencv.findContours(true,true);
+  }
+  if (outputs[3] != null) {
+    
+    opencv.loadImage(outputs[3]);
+    
+    contoursBlue = opencv.findContours(true,true);
+  }
+  if (outputs[4] != null) {
+    
+    opencv.loadImage(outputs[4]);
+    
+    contoursGreen = opencv.findContours(true,true);
+  }
+  if (outputs[5] != null) {
+    
+    opencv.loadImage(outputs[5]);
+    
+    contoursWhite = opencv.findContours(true,true);
+  }
+
+}
 }
 
-void displayContoursBoundingBoxes() {
+void displayContoursBoundingBoxesRed() {
   
-  for (int i=0; i<contours.size(); i++) {
+  for (int i=0; i<contoursRed.size(); i++) {
     
-    Contour contour = contours.get(i);
+    Contour contour = contoursRed.get(i);
     Rectangle r = contour.getBoundingBox();
     
     if (r.width < 20 || r.height < 20)
@@ -170,10 +219,97 @@ void displayContoursBoundingBoxes() {
     fill(255, 0, 0, 150);
     strokeWeight(2);
     rect(r.x, r.y, r.width, r.height);
-   // println("contour coordinates: "+ r.x +" " + r.y);
+    println("contour coordinates for Red: "+ r.x +" " + r.y);
   }
 }
 
+void displayContoursBoundingBoxesYellow() {
+  
+  for (int i=0; i<contoursYellow.size(); i++) {
+    
+    Contour contour = contoursYellow.get(i);
+    Rectangle r = contour.getBoundingBox();
+    
+    if (r.width < 20 || r.height < 20)
+      continue;
+    
+    stroke(255, 0, 0);
+    fill(255, 255, 0, 150);
+    strokeWeight(2);
+    rect(r.x, r.y, r.width, r.height);
+    println("contour coordinates and Yellow: "+ r.x +" " + r.y);
+  }
+}
+
+void displayContoursBoundingBoxesOrange() {
+  
+  for (int i=0; i<contoursOrange.size(); i++) {
+    
+    Contour contour = contoursOrange.get(i);
+    Rectangle r = contour.getBoundingBox();
+    
+    if (r.width < 20 || r.height < 20)
+      continue;
+    
+    stroke(255, 0, 0);
+    fill(255, 69, 0, 150);
+    strokeWeight(2);
+    rect(r.x, r.y, r.width, r.height);
+    println("contour coordinates of Orange: "+ r.x +" " + r.y);
+  }
+}
+
+void displayContoursBoundingBoxesBlue() {
+  
+  for (int i=0; i<contoursBlue.size(); i++) {
+    
+    Contour contour = contoursBlue.get(i);
+    Rectangle r = contour.getBoundingBox();
+    
+    if (r.width < 20 || r.height < 20)
+      continue;
+    
+    stroke(255, 0, 0);
+    fill(0, 0, 255, 150);
+    strokeWeight(2);
+    rect(r.x, r.y, r.width, r.height);
+    //println("contour coordinates of Blue: "+ r.x +" " + r.y);
+  }
+}
+void displayContoursBoundingBoxesGreen() {
+  
+  for (int i=0; i<contoursGreen.size(); i++) {
+    
+    Contour contour = contoursGreen.get(i);
+    Rectangle r = contour.getBoundingBox();
+    
+    if (r.width < 20 || r.height < 20)
+      continue;
+    
+    stroke(255, 0, 0);
+    fill(0, 255, 0, 150);
+    strokeWeight(2);
+    rect(r.x, r.y, r.width, r.height);
+    println("contour coordinates of Green: "+ r.x +" " + r.y);
+  }
+}
+void displayContoursBoundingBoxesWhite() {
+  
+  for (int i=0; i<contoursWhite.size(); i++) {
+    
+    Contour contour = contoursWhite.get(i);
+    Rectangle r = contour.getBoundingBox();
+    
+    if (r.width < 20 || r.height < 20)
+      continue;
+    
+    stroke(255, 255, 255);
+    fill(255, 0, 0, 150);
+    strokeWeight(2);
+    rect(r.x, r.y, r.width, r.height);
+   // println("contour coordinates of White: "+ r.x +" " + r.y);
+  }
+}
 //////////////////////
 // Keyboard / Mouse
 //////////////////////
