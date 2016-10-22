@@ -16,16 +16,22 @@
  
 import gab.opencv.*;
 import processing.video.*;
-import java.awt.Rectangle;
+import java.awt.*; //for Point and rectangle
+import java.util.*;
 
 Capture video,cam;
 OpenCV opencv;
 PImage src;
-ArrayList<Contour> contoursYellow, contoursRed, contoursOrange, contoursBlue, contoursGreen, contoursWhite;
-
+ArrayList<Contour> contoursYellow, contoursRed, contoursOrange, contoursBlue, contoursGreen, contoursWhite; //contours for different colours
+//int[][] coordinates = new int [8][2];
+//String [] colourOfFace=new String [9]; //colour of face
 // <1> Set the range of Hue values for our filter
-//ArrayList<Integer> colors;
+ArrayList<Point> list = new ArrayList<Point>(); //coordinates of colour points on cube
+ArrayList<String> colourNames = new ArrayList<String>(); //colour of face
 int maxColors = 6;
+//int indexX=0;
+//int indexY=0;
+//int stringIndex=0;
 int[] hues;
 int[] colors;
 int rangeWidth = 10;
@@ -37,7 +43,7 @@ int colorToChange=0;
 void setup() {
   size(640, 480);
   noFill();
-  String[] cameras = Capture.list();
+//  String[] cameras = Capture.list();
   
   //if (cameras.length == 0) {
   //  println("There are no cameras available for capture.");
@@ -53,7 +59,7 @@ void setup() {
     video.start();
     delay(500);
   opencv = new OpenCV(this, 640,480);
-  delay(500);
+  delay(250);
 
   contoursRed = new ArrayList<Contour>();
   contoursYellow = new ArrayList<Contour>();
@@ -118,13 +124,34 @@ void draw() {
     text("Red,Yellow,Orange,Blue,Green,White", 10, 45);
   }
   
-
+if( list.size() == 9){
+  println("9");
+  
+  for(int i = 0; i < list.size(); i++) {   
+    System.out.print(list.get(i));
+    System.out.print(colourNames.get(i));
+    
+} 
+   sortCoordinates();
+   for(int i = 0; i < list.size(); i++) {   
+    System.out.println(colourNames.get(i));
+  }
+   }
+  else{
+  list.clear();
+  colourNames.clear();
+  }
   displayContoursBoundingBoxesRed();
   displayContoursBoundingBoxesYellow();
   displayContoursBoundingBoxesOrange();
   displayContoursBoundingBoxesBlue();
   displayContoursBoundingBoxesGreen();
   displayContoursBoundingBoxesWhite();
+  //print the face colours
+  //for(int i =0; i<9; i++){
+  //    println(colourOfFace[i]);
+// }
+ 
     
 }
 
@@ -164,6 +191,7 @@ void detectColors() {
   
   // <7> Find contours in our range image.
   //     Passing 'true' sorts them by descending area.
+  
   if (outputs[0] != null) {
     
     opencv.loadImage(outputs[0]);
@@ -205,6 +233,106 @@ void detectColors() {
 }
 }
 
+
+
+void sortCoordinates (){
+
+   int[] yValues = new int [9];
+   int[] xValues = new int [9];
+   
+   
+   //sort y keeping x and colourName respective
+   int i=0;
+   for (Point p : list){
+     xValues[i]=p.x;
+     yValues[i]=p.y;
+     i++;
+   }
+    int j,k,first,temp1,temp2;
+    String colourTemp;
+    for( j= yValues.length-1; j>0; j--)
+    {
+      first = 0;
+      for(k = 1; k <= j; k++)
+      {
+        if( yValues[k] > yValues[first])
+        first = k;
+      }
+      temp1 = yValues[first];
+      temp2 = xValues[first];
+      colourTemp = colourNames.get(first);
+      yValues[first] = yValues[j];
+      xValues[first] = xValues[j];
+      colourNames.set(first,colourNames.get(j));
+      yValues[j] = temp1;
+      xValues[j] = temp2;
+      colourNames.set(j,colourTemp);
+    }
+    
+    //gets next 3 smallest y values and sorts thier smallest x's, keeping y and
+    //colour name respective to get correct order of colours
+    for(int z =0; z<3; z++)
+    {
+      first = 0;
+      for(int y = 1; y <= z; y++)
+      {
+        if( xValues[y] > xValues[first])
+        first = y;
+      }
+      temp1 = yValues[first];
+      temp2 = xValues[first];
+      colourTemp = colourNames.get(first);
+      yValues[first] = yValues[z];
+      xValues[first] = xValues[z];
+      colourNames.set(first,colourNames.get(z));
+      yValues[z] = temp1;
+      xValues[z] = temp2;
+      colourNames.set(z,colourTemp);
+    }
+    //gets next 3 smallest y values and sorts thier smallest x's, keeping y and
+    //colour name respective
+    for(int z =3; z<6; z++)
+    {
+      first = 3;
+      for(int y = 4; y <= z; y++)
+      {
+        if( xValues[y] > xValues[first])
+        first = y;
+      }
+      temp1 = yValues[first];
+      temp2 = xValues[first];
+      colourTemp = colourNames.get(first);
+      yValues[first] = yValues[z];
+      xValues[first] = xValues[z];
+      colourNames.set(first,colourNames.get(z));
+      yValues[z] = temp1;
+      xValues[z] = temp2;
+      colourNames.set(z,colourTemp);
+    }
+    //gets last 3 smallest y values and sorts thier smallest x's, keeping y and
+    //colour name respective
+    for(int z =6; z<9; z++)
+    {
+      first = 6;
+      for(int y = 7; y <= z; y++)
+      {
+        if( xValues[y] > xValues[first])
+        first = y;
+      }
+      temp1 = yValues[first];
+      temp2 = xValues[first];
+      colourTemp = colourNames.get(first);
+      yValues[first] = yValues[z];
+      xValues[first] = xValues[z];
+      colourNames.set(first,colourNames.get(z));
+      yValues[z] = temp1;
+      xValues[z] = temp2;
+      colourNames.set(z,colourTemp);
+    }
+}
+
+
+
 void displayContoursBoundingBoxesRed() {
   
   for (int i=0; i<contoursRed.size(); i++) {
@@ -220,6 +348,15 @@ void displayContoursBoundingBoxesRed() {
     strokeWeight(2);
     rect(r.x, r.y, r.width, r.height);
     println("contour coordinates for Red: "+ r.x +" " + r.y);
+    list.add(new Point(r.x,r.y));
+    colourNames.add(new String("Red "));
+    //coordinates[indexX][indexY]=r.x;
+    //indexY++;
+    //coordinates[indexX][indexY]=r.y;
+    //indexY--;
+    //indexX++;
+    //colourOfFace[stringIndex]="R";
+    //stringIndex++;
   }
 }
 
@@ -229,8 +366,7 @@ void displayContoursBoundingBoxesYellow() {
     
     Contour contour = contoursYellow.get(i);
     Rectangle r = contour.getBoundingBox();
-    
-    if (r.width < 20 || r.height < 20)
+    if (r.width < 20 || r.height < 20 )
       continue;
     
     stroke(255, 0, 0);
@@ -238,6 +374,15 @@ void displayContoursBoundingBoxesYellow() {
     strokeWeight(2);
     rect(r.x, r.y, r.width, r.height);
     println("contour coordinates and Yellow: "+ r.x +" " + r.y);
+    list.add(new Point(r.x,r.y));
+    colourNames.add(new String("Yellow "));
+    //coordinates[indexX][indexY]=r.x;
+    //indexY++;
+    //coordinates[indexX][indexY]=r.y;
+    //indexY--;
+    //indexX++;
+    //colourOfFace[stringIndex]="Y";
+    //stringIndex++;
   }
 }
 
@@ -256,6 +401,15 @@ void displayContoursBoundingBoxesOrange() {
     strokeWeight(2);
     rect(r.x, r.y, r.width, r.height);
     println("contour coordinates of Orange: "+ r.x +" " + r.y);
+    list.add(new Point(r.x,r.y));
+    colourNames.add(new String("Orange "));
+    //coordinates[indexX][indexY]=r.x;
+    //indexY++;
+    //coordinates[indexX][indexY]=r.y;
+    //indexY--;
+    //indexX++;
+    //colourOfFace[stringIndex]="O";
+    //stringIndex++;
   }
 }
 
@@ -273,7 +427,16 @@ void displayContoursBoundingBoxesBlue() {
     fill(0, 0, 255, 150);
     strokeWeight(2);
     rect(r.x, r.y, r.width, r.height);
-    //println("contour coordinates of Blue: "+ r.x +" " + r.y);
+    list.add(new Point(r.x,r.y));
+    println("contour coordinates of Blue: "+ r.x +" " + r.y);
+    colourNames.add(new String("Blue "));
+    //coordinates[indexX][indexY]=r.x;
+    //indexY++;
+    //coordinates[indexX][indexY]=r.y;
+    //indexY--;
+    //indexX++;
+    //colourOfFace[stringIndex]="B";
+    //stringIndex++;
   }
 }
 void displayContoursBoundingBoxesGreen() {
@@ -290,7 +453,16 @@ void displayContoursBoundingBoxesGreen() {
     fill(0, 255, 0, 150);
     strokeWeight(2);
     rect(r.x, r.y, r.width, r.height);
+    list.add(new Point(r.x,r.y));
     println("contour coordinates of Green: "+ r.x +" " + r.y);
+    colourNames.add(new String("Green "));
+    //coordinates[indexX][indexY]=r.x;
+    //indexY++;
+    //coordinates[indexX][indexY]=r.y;
+    //indexY--;
+    //indexX++;
+    //colourOfFace[stringIndex]="G";
+    //stringIndex++;
   }
 }
 void displayContoursBoundingBoxesWhite() {
@@ -307,7 +479,16 @@ void displayContoursBoundingBoxesWhite() {
     fill(255, 0, 0, 150);
     strokeWeight(2);
     rect(r.x, r.y, r.width, r.height);
+    list.add(new Point(r.x,r.y));
+    colourNames.add(new String("White "));
    // println("contour coordinates of White: "+ r.x +" " + r.y);
+   //coordinates[indexX][indexY]=r.x;
+   // indexY++;
+   // coordinates[indexX][indexY]=r.y;
+   // indexY--;
+   // indexX++;
+   // colourOfFace[stringIndex]="W";
+   // stringIndex++;
   }
 }
 //////////////////////
@@ -321,11 +502,18 @@ void mousePressed() {
    
    color[] c = new color[6];
    c[0] = color(156,46,55);   //red
-    c[1] = color(172,158,90); //yellow
-    c[2] = color(182,94,49);  //orange
-    c[3] = color(0,113,2412);   //blue
-    c[4] = color(36,159,88);   //green
-    c[5] = color(157,163,196222);  //white
+   // c[1] = color(172,158,90); //yellow
+   // c[2] = color(182,94,49);  //orange
+   // c[3] = color(0,113,2412);   //blue
+   // c[4] = color(36,159,88);   //green
+   // c[5] = color(157,163,196222);  //white
+   
+  // c[0] = color(123,48,75);   //red
+    c[1] = color(227,205,87); //yellow
+    c[2] = color(245,125,61);  //orange
+    c[3] = color(00,104,226);   //blue
+    c[4] = color(0,181,106);   //green
+    c[5] = color(141,163,111);  //white
     int hue = int(map(hue(c[colorToChange]), 0, 255, 0, 180));
     colors[colorToChange] = c[colorToChange];
     
