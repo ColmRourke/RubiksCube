@@ -1,0 +1,413 @@
+import processing.opengl.*;
+
+String [][] colourNames = {{"r","r","r","r","r","r","r","r","r"},
+        {"y","y","y","y","y","y","y","y","y"},
+        {"o","o","o","o","o","o","o","o","o"},
+        {"w","w","w","w","w","w","w","w","w"},
+        {"b","b","b","b","b","b","b","b","b"},
+        {"g","g","g","g","g","g","g","g","g"}};
+Cube [] cubies = new Cube[27];
+
+void setup() {
+  size(600, 600, OPENGL);
+  
+  colourNames[0][0]="g";
+  colourNames[0][1]="w";
+  colourNames[0][2]="b";
+  colourNames[0][3]="b";
+  colourNames[0][4]="r";
+  colourNames[0][5]="b";
+  colourNames[0][6]="b";
+  colourNames[0][7]="y";
+  colourNames[0][8]="y";
+  
+  colourNames[1][0]="r";
+  colourNames[1][1]="g";
+  colourNames[1][2]="g";
+  colourNames[1][3]="r";
+  colourNames[1][4]="y";
+  colourNames[1][5]="o";
+  colourNames[1][6]="b";
+  colourNames[1][7]="r";
+  colourNames[1][8]="g";
+  
+  colourNames[2][0]="w";
+  colourNames[2][1]="g";
+  colourNames[2][2]="g";
+  colourNames[2][3]="w";
+  colourNames[2][4]="o";
+  colourNames[2][5]="w";
+  colourNames[2][6]="r";
+  colourNames[2][7]="g";
+  colourNames[2][8]="w";
+  
+  colourNames[3][0]="r";
+  colourNames[3][1]="o";
+  colourNames[3][2]="y";
+  colourNames[3][3]="g";
+  colourNames[3][4]="w";
+  colourNames[3][5]="y";
+  colourNames[3][6]="o";
+  colourNames[3][7]="w";
+  colourNames[3][8]="w";
+  
+  colourNames[4][0]="w";
+  colourNames[4][1]="r";
+  colourNames[4][2]="o";
+  colourNames[4][3]="b";
+  colourNames[4][4]="b";
+  colourNames[4][5]="y";
+  colourNames[4][6]="o";
+  colourNames[4][7]="b";
+  colourNames[4][8]="y";
+  
+  colourNames[5][0]="r";
+  colourNames[5][1]="o";
+  colourNames[5][2]="o";
+  colourNames[5][3]="r";
+  colourNames[5][4]="g";
+  colourNames[5][5]="y";
+  colourNames[5][6]="b";
+  colourNames[5][7]="o";
+  colourNames[5][8]="y";
+  
+  cubies=getRc();
+}
+
+void draw() {
+  background(50);
+  lights();
+  stroke(0);
+  translate(width/2, height/2);
+  rotateX(-mouseY*0.01);
+  rotateY(mouseX*-0.01);
+  
+  for(int i =0; i<27; i++){
+    cubies[i].display();
+  }
+}
+
+void keyPressed() {
+  R();
+  cubies=getRc();
+  for(int i =0; i<27; i++){
+    cubies[i].display();
+  }
+}
+
+Cube[] getRc (){
+  String [][] combination = colourNames;
+  String [] corner = new String[8];
+  String [] edges = new String[12];
+  Cube[] RC =  new Cube [27];
+  //corners, colours below refer to the middle colour of a face//////
+  //red yellow white
+  corner[0] = combination[0][0] + combination[3][2] + combination[4][6];
+  RC[0] = new Cube(100, 1, 1, 1, combination[0][0], combination[3][2], combination[4][6]);
+  //red yellow blue
+  corner[1] = combination[0][2] + combination[4][8] + combination[1][0];
+  RC[1] = new Cube(100, -1, 1, 1, combination[0][2], combination[1][0], combination[4][8]);
+  //red white green
+  corner[2] = combination[0][6] + combination[3][8] + combination[5][0];
+  RC[2] = new Cube(100, 1, -1, 1, combination[0][6], combination[3][8], combination[5][0]);
+  //red green yellow
+  corner[3] = combination[0][8] + combination[5][2] + combination[1][6];
+  RC[3] = new Cube(100, -1, -1, 1, combination[0][8], combination[1][6], combination[5][2]);
+  //blue orange white
+  corner[4] = combination[4][0] + combination[2][2] + combination[3][0];
+  RC[4] = new Cube(100, 1, 1, -1, combination[2][2], combination[3][0], combination[4][0]);
+  //blue orange yellow
+  corner[5] = combination[4][2] + combination[2][0] + combination[1][2];
+  RC[5] = new Cube(100, -1, 1, -1, combination[2][0], combination[1][2], combination[4][2]);
+  //orange white green
+  corner[6] = combination[2][8] + combination[3][6] + combination[5][6];
+  RC[6] = new Cube(100, 1, -1, -1, combination[2][8], combination[3][6], combination[5][6]);
+  //orange yellow green
+  corner[7] = combination[2][6] + combination[1][8] + combination[5][8];
+  RC[7] = new Cube(100,-1, -1, -1, combination[2][6], combination[1][8], combination[5][8]);
+  
+  //edges////////
+  //red white
+  edges[0]= combination[0][3] + combination[3][5] ;
+  RC[8] = new Cube(100, 1, 0, 1, combination[0][3], combination[3][5], "none");
+  //red blue
+  edges[1]= combination[0][1] + combination[4][7] ;
+  RC[9] = new Cube(100, 0, 1, 1, combination[0][1], "none", combination[4][7]);
+  //red yellow
+  edges[2]= combination[0][5] + combination[1][3] ;
+  RC[10] = new Cube(100, -1, 0, 1, combination[0][5], combination[1][3], "none");
+  //red green
+  edges[3]= combination[0][7] + combination[5][1] ;
+  RC[11] = new Cube(100, 0, -1, 1, combination[0][7], "none", combination[5][1]);
+  //yellow blue
+  edges[4]= combination[1][1] + combination[4][5] ;
+  RC[12] = new Cube(100, -1, 1, 0,  "none", combination[1][1], combination[4][5]);
+  //yellow green
+  edges[5]= combination[1][7] + combination[5][5] ;
+  RC[13] = new Cube(100, -1, -1, 0, "none", combination[1][7], combination[5][5]);
+  //white blue
+  edges[6]= combination[3][1] + combination[4][3] ;
+  RC[14] = new Cube(100, 1, 1, 0,  "none", combination[3][1], combination[4][3]);
+  //white green
+  edges[7]= combination[3][7] + combination[5][3] ;
+  RC[15] = new Cube(100, 1, -1, 0, "none", combination[3][7], combination[5][3]);
+  //orange blue
+  edges[8]= combination[2][1] + combination[4][1] ;
+  RC[16] = new Cube(100, 0, 1, -1, combination[2][1], "none", combination[4][1]);
+  //orange yellow
+  edges[9]= combination[2][3] + combination[1][5] ;
+  RC[17] = new Cube(100, -1, 0, -1, combination[2][3], combination[1][5], "none");
+  //orange white
+  edges[10]=combination[2][5] + combination[3][3] ;
+  RC[18] = new Cube(100, 1, 0, -1, combination[2][5], combination[3][3], "none");
+  //orange green 
+  edges[11]= combination[2][7] + combination[5][7] ;
+  RC[19] = new Cube(100, 0, -1, -1, combination[2][7], "none", combination[5][7]);
+  
+  ////the black centre cube////
+  RC[20] = new Cube(100, 0, 0, 0, "none", "none", "none");
+  
+  ////the center pieces////  their positions are wrong
+  RC[21] = new Cube(100, 0, 0, 1, "r", "none", "none");
+  RC[22] = new Cube(100, -1, 0, 0, "none", "y", "none");
+  RC[23] = new Cube(100, 0, 0, -1, "o", "none", "none");
+  RC[24] = new Cube(100, 1, 0, 0, "none", "w", "none");
+  RC[25] = new Cube(100, 0, 1, 0, "none", "none", "b");
+  RC[26] = new Cube(100, 0, -1, 0, "none", "none", "g");
+
+ return RC;
+
+}
+
+void R (){
+
+  String[] temp= new String [9];
+  String[] temp2 = new String [12];
+  //twist red face
+      temp[2]=colourNames[0][0];
+      temp[5]=colourNames[0][1];
+      temp[8]=colourNames[0][2];
+      temp[1]=colourNames[0][3];
+      temp[4]=colourNames[0][4];
+      temp[7]=colourNames[0][5];
+      temp[0]=colourNames[0][6];
+      temp[3]=colourNames[0][7];
+      temp[6]=colourNames[0][8];
+      
+      colourNames[0]=temp;
+      temp = new String [9];
+      
+      //now the nasty bit, changing the colours of the edges of the recently twisted face
+      //if we take the red blue white cubie, take the colour on the blue side, thats our first colour
+      //0 red 1 yellow 2 orange 3 white 4 blue 5 green
+      temp2[0] = colourNames[4][6];
+      temp2[1] = colourNames[4][7];
+      temp2[2] = colourNames[4][8];
+      
+      temp2[3] = colourNames[1][0];
+      temp2[4] = colourNames[1][3];
+      temp2[5] = colourNames[1][6];
+      
+      temp2[6] = colourNames[5][2];
+      temp2[7] = colourNames[5][1];
+      temp2[8] = colourNames[5][0];
+      
+      temp2[9] = colourNames[3][8];
+      temp2[10] = colourNames[3][5];
+      temp2[11] = colourNames[3][2];
+      
+      colourNames[4][6] = temp2[9];
+      colourNames[4][7] = temp2[10];
+      colourNames[4][8] = temp2[11];
+      colourNames[1][0] = temp2[0];
+      colourNames[1][3] = temp2[1];
+      colourNames[1][6] = temp2[2];
+      colourNames[5][2] = temp2[3];
+      colourNames[5][1] = temp2[4];
+      colourNames[5][0] = temp2[5];
+      colourNames[3][8] = temp2[6];
+      colourNames[3][5] = temp2[7];
+      colourNames[3][2] = temp2[8];
+      
+      temp2 = new String[12];
+    
+
+}
+
+class Cube {
+  // Position, velocity vectors
+  PVector position;
+  // Vertices of the cube
+  PVector[] vertices = new PVector[24];
+  // width, height, depth
+  int sizeOfCube, x, y, z;
+  String cx,cy,cz;
+  // colors for faces of cube
+  color[] quadBG = new color[7];
+
+  Cube(int s, int x,int y,int z, String cx, String cy, String cz) {
+    this.sizeOfCube = s;
+    //colours
+    // Colors are hardcoded
+    quadBG[0] = color(255, 0, 0); //red          z
+    quadBG[1] = color(255, 255, 0); //yellow       x
+    quadBG[2] = color(255, 255, 255); //white            x
+    quadBG[3] = color(255, 165, 0); //orange          z
+    quadBG[4] = color(0, 128, 0); // green
+    quadBG[5] = color(0, 0, 255); // blue     y
+    quadBG[6] = color(0,0,0); //black
+    
+    for(int i =0; i<quadBG.length; i++){
+      quadBG[i] = color(0,0,0);
+    }
+    //r y o w b g
+    if(cx.equals("r")){
+       quadBG[0] = color(255, 0, 0); //red  
+       quadBG[3] = color(255, 0, 0);           
+    }
+    else if (cx.equals("y")){
+       quadBG[0] = color(255, 255, 0); 
+       quadBG[3] = color(255, 255, 0); //yellow     
+    }
+    else if (cx.equals("o"))
+    {
+       quadBG[0] = color(255, 165, 0);   
+       quadBG[3] = color(255, 165, 0); //orange          
+    }
+    else if (cx.equals("w"))
+    {
+       quadBG[0] = color(255, 255, 255);  
+       quadBG[3] = color(255, 255, 255); //white       
+    }
+    else if (cx.equals("b"))
+    {
+       quadBG[0] = color(0, 0, 255); 
+       quadBG[3] = color(0, 0, 255); //blue         
+    }
+    else if (cx.equals("g"))
+    {
+       quadBG[0] = color(0, 128, 0); //red  
+       quadBG[3] = color(0, 128, 0); //orange          
+    }
+    
+    //y direction
+    if(cy.equals("r")){
+       quadBG[1] = color(255, 0, 0); //red  
+       quadBG[2] = color(255, 0, 0);           
+    }
+    else if (cy.equals("y")){
+       quadBG[1] = color(255, 255, 0); 
+       quadBG[2] = color(255, 255, 0); //yellow     
+    }
+    else if (cy.equals("o"))
+    {
+       quadBG[1] = color(255, 165, 0);   
+       quadBG[2] = color(255, 165, 0); //orange          
+    }
+    else if (cy.equals("w"))
+    {
+       quadBG[1] = color(255, 255, 255);  
+       quadBG[2] = color(255, 255, 255); //white       
+    }
+    else if (cy.equals("b"))
+    {
+       quadBG[1] = color(0, 0, 255); 
+       quadBG[2] = color(0, 0, 255); //blue         
+    }
+    else if (cy.equals("g"))
+    {
+       quadBG[1] = color(0, 128, 0); //red  
+       quadBG[2] = color(0, 128, 0); //orange          
+    }
+    //z direction
+    if(cz.equals("r")){
+       quadBG[4] = color(255, 0, 0); //red  
+       quadBG[5] = color(255, 0, 0);           
+    }
+    else if (cz.equals("y")){
+       quadBG[4] = color(255, 255, 0); 
+       quadBG[5] = color(255, 255, 0); //yellow     
+    }
+    else if (cz.equals("o"))
+    {
+       quadBG[4] = color(255, 165, 0);   
+       quadBG[5] = color(255, 165, 0); //orange          
+    }
+    else if (cz.equals("w"))
+    {
+       quadBG[4] = color(255, 255, 255);  
+       quadBG[5] = color(255, 255, 255); //white       
+    }
+    else if (cz.equals("b"))
+    {
+       quadBG[4] = color(0, 0, 255); 
+       quadBG[5] = color(0, 0, 255); //blue         
+    }
+    else if (cz.equals("g"))
+    {
+       quadBG[4] = color(0, 128, 0); //red  
+       quadBG[5] = color(0, 128, 0); //orange          
+    }
+       
+    // Start in center
+    position = new PVector();
+   
+    this.position.x=x*s; // gets x, -1<=x<=1, multpilies it by size of cube
+    this.position.y=y*s;
+    this.position.z=z*s;
+    
+    // cube composed of 6 quads
+    //front
+    float point = sizeOfCube/2;
+    vertices[0] = new PVector(-point, -point, point);
+    vertices[1] = new PVector(point, -point, point);
+    vertices[2] = new PVector(point, point, point);
+    vertices[3] = new PVector(-point, point, point);
+    //left
+    vertices[4] = new PVector(-point, -point, point);
+    vertices[5] = new PVector(-point, -point, -point);
+    vertices[6] = new PVector(-point, point, -point);
+    vertices[7] = new PVector(-point, point, point);
+    //rigpointt
+    vertices[8] = new PVector(point, -point, point);
+    vertices[9] = new PVector(point, -point, -point);
+    vertices[10] = new PVector(point, point, -point);
+    vertices[11] = new PVector(point, point, point);
+    //back
+    vertices[12] = new PVector(-point, -point, -point); 
+    vertices[13] = new PVector(point, -point, -point);
+    vertices[14] = new PVector(point, point, -point);
+    vertices[15] = new PVector(-point, point, -point);
+    //top
+    vertices[16] = new PVector(-point, -point, point);
+    vertices[17] = new PVector(-point, -point, -point);
+    vertices[18] = new PVector(point, -point, -point);
+    vertices[19] = new PVector(point, -point, point);
+    //bottom
+    vertices[20] = new PVector(-point, point, point);
+    vertices[21] = new PVector(-point, point, -point);
+    vertices[22] = new PVector(point, point, -point);                           
+    vertices[23] = new PVector(point, point, point);                           
+    
+  } 
+  // Cube shape itself
+  void drawCube() {
+    // Draw cube
+    for (int i=0; i<6; i++) {
+      fill(quadBG[i]);
+      beginShape(QUADS);
+      for (int j=0; j<4; j++) {
+        vertex(vertices[j+4*i].x, vertices[j+4*i].y, vertices[j+4*i].z);
+      }
+      endShape();
+    }
+  }
+  void display() {
+    pushMatrix();
+    translate(position.x, position.y, position.z);
+    stroke(0); //outline cubies
+    strokeWeight(10);
+    drawCube(); // Farm out shape to another method
+    popMatrix();
+  }
+}
