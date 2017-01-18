@@ -1,4 +1,71 @@
+/**
+  * Author: Colm Rourke   Date:2/12/16
+  * Simulates Rubik's Cube (RC), allows user to manipluate this RC as if it were
+  * a real RC. 
+  * Camera takes in state of real RC and this is the beginging state of the 
+  * simulated RC
+  * It uses the OpenCV for Processing library By Greg Borenstein
+  * https://github.com/atduskgreg/open.cv-processing
+  *
+  * Instructions
+  * Colours are assigned numbers
+  * 1=Red, 2=Yellow, 3=Orange, 4=Blue, 5=Green, 6=White
+  * Press on numberical key [1-6] and click on the associated colour above to
+  * track it. Press the enter key when all the colours have been stored.
+  * Show all faces to the camera. 
+  * 
+  * The simulated RC should appear with a default state.
+  * It will change state if all 6 faces have been found by the camera.
+  * You can manipulate the RC as follows:
+  *     Press key according to the move to execute
+  *     Note Red faces should be pointing towards the user.
+  *          Move    Key
+  *          U       u
+  *          U'      U
+  *          D       d
+  *          D'      D
+  *          R       r
+  *          R'      R
+  *          L       l
+  *          L'      L
+  *          F       f
+  *          F'      F
+  *          D       d
+  *          D'      D
+  *  Previous Move  Left Arrow 
+  **/
+
+
+
+
 import processing.opengl.*;
+import gab.opencv.*;
+import processing.video.*;
+import java.awt.*; //for Point and rectangle
+import java.util.*;
+
+  Capture video,cam;
+  OpenCV opencv;
+  PImage src;
+  ArrayList<Contour> contoursYellow, contoursRed, contoursOrange, contoursBlue, contoursGreen, contoursWhite, contoursAll; //contours for different colours
+  
+  // <1> Set the range of Hue values for our filter
+  ArrayList<Point> list = new ArrayList<Point>(); //coordinates of colour points on cube
+  ArrayList<String> colourList = new ArrayList<String>(); //colour of face
+  String[][] colourArray = new String [6][9];
+  color[] c = new color[6];
+  int[] hues;
+  int[] colors;
+  int maxColors = 6;
+  int faceNumber = 0;  
+  int rangeWidth = 5;
+  int colorToChange = 0;
+  int configureColourAt = 0;
+  double contourMeanWidth,contourMeanHeight;
+  boolean pressed = false;  //Press enter to set to true and begin when configured
+  PImage[] outputs;
+  PImage backgroundImage;
+  Stack<Character> previousMoves = new Stack<Character>();
 
 String [][] colourNames = {
         {"w","r","r","b","r","b","w","g","b"},
@@ -10,24 +77,294 @@ String [][] colourNames = {
 Cube [] cubies = new Cube[27];
 
 void setup() {
-  size(600, 600, OPENGL);
-  cubies=getRc();
+  size(1300, 600, OPENGL);
+  noFill();
+    video = new Capture(this, "name=/dev/video1,size=640x480,fps=30");
+   // video = new Capture(this,640,480);
+    video.start();
+    delay(500);
+    opencv = new OpenCV(this, 640,480);
+    delay(500);
+  
+    contoursRed = new ArrayList<Contour>();
+    contoursYellow = new ArrayList<Contour>();
+    contoursOrange = new ArrayList<Contour>();
+    contoursBlue = new ArrayList<Contour>();
+    contoursGreen = new ArrayList<Contour>();
+    contoursWhite = new ArrayList<Contour>();
+    contoursAll = new ArrayList<Contour>();
+         //default colours
+    c[0] = color(149,38,46);   //red
+    c[1] = color(186,167,89); //yellow
+    c[2] = color(182,94,47);  //orange
+    c[3] = color(0,65,141);   //blue
+    c[4] = color(32,113,62);   //green
+    c[5] = color(125,135,159);  //white
+    
+    
+    // Array for detection colors
+    colors = new int[maxColors];
+    hues = new int[maxColors];
+    
+    outputs = new PImage[maxColors];
+    cubies=getRc();
 }
 
 void draw() {
-  background(50);
+ //backgroundImage = loadImage("rubik_s_cube.png");
+  background(40);
+  video.read();
+  image(video,0,0);
+  video.loadPixels();
+  video.updatePixels();
+  
+      // <2> Load the new frame of our movie in to OpenCV
+    opencv.loadImage(video);
+    
+    // Tell OpenCV to use color information
+    opencv.useColor();
+    src = opencv.getSnapshot();
+    
+    // <3> Tell OpenCV to work in HSV color space.
+    opencv.useColor(HSB);
+    
+    detectColors();
+    
+    // Show images
+    image(src, 0, 0);
+    for (int i=0; i<outputs.length; i++) {
+      
+      if (outputs[i] != null) {
+        image(outputs[i], 640-640/6, i*480/6, 640/6, 480/6);
+        
+        noStroke();
+        fill(colors[i]);
+      }
+      
+    }
+    
+    // Print text if new color expected
+    textSize(20);
+    stroke(255);
+    fill(255);
+    
+    text("Configure,press index[1-6] of colour and then click on that colour",10,25);
+    text("Red[1],Yellow[2],Orange[3],Blue[4],Green[5],White[6]", 10, 45);
+    text("Click Enter to start, please configure first", 10, 65);
+   
+    
+     
+    
+    //when only 9 colours are detected
+  //if( list.size() == 9 && pressed==true){
+  // // println("9");
+     
+  //   sortCoordinates(); //sort coordinates so they are in order of the colours of the cube face
+  //  //checks if it's face has been entered before
+  //   boolean isSameFace = false;
+  //   for(int otherFaces=0; otherFaces<6; otherFaces++){
+  //     println(colourList.get(4) + " " + colourArray[otherFaces][4]);
+  //    // if(colourArray[otherFaces][4] == colourList.get(4))  //is centre colour that is viewed already present in colourArray
+  //    if(colourArray[0][4]==null){
+  //    for(int i = 0; i < list.size(); i++) { 
+  //      colourArray[faceNumber][i] = colourList.get(i);
+  //      System.out.println(colourArray[faceNumber][i]);
+       
+  //      }
+      
+  //    }
+  //     else if( colourArray[otherFaces][4]!=null&&colourList.get(4).contains(colourArray[otherFaces][4] ))
+  //     {
+  //       isSameFace=true;
+  //       list.clear();
+  //       colourList.clear();
+  //      // println("234");
+  //       break;
+  //     }
+  //   }
+  //   //if new face is shown put into colourArray 
+  //   if(colourArray[0][4]==null||(isSameFace==false  )){   
+  //     for(int i = 0; i < list.size(); i++) { 
+  //      colourArray[faceNumber][i] = colourList.get(i);
+  //      System.out.println(colourArray[faceNumber][i]);
+       
+  //      }
+  //   faceNumber++;
+  //   }
+  //}
+      //when only 9 colours are detected
+  if( list.size() == 9 && pressed==true){
+     
+     sortCoordinates();            //sort coordinates so they are in order of the colours of the cube face
+     boolean isSameFace = false;   //checks if it's face has been entered before
+     System.out.println("The middle colour recieved        The middle colours already seen");
+     for(int otherFaces = 0; otherFaces < 6; otherFaces++){
+         System.out.println(colourList.get(4) + "                 " + colourArray[otherFaces][4]); //prints the list of colours recieved and the colours stored already
+
+       
+       //colours on first face is stored in colourArray, then prints colours of first face!
+       if(colourArray[0][4]==null){
+         System.out.println(" First face colours are : ");
+         for(int i = 0; i < list.size(); i++) { 
+           colourArray[faceNumber][i] = colourList.get(i);  
+           System.out.println(colourArray[faceNumber][i]);     
+        }
+        faceNumber++;
+      }
+      
+       
+         //if middle colour had been seen before, clear lists and scan again
+         else if( colourArray[otherFaces][4] != null && colourList.get(4).contains(colourArray[otherFaces][4] ))
+         {
+           isSameFace = true;
+           list.clear();
+           colourList.clear();
+           break;
+         }
+     }
+         //if centre colour is new then store it and print the colours of the face
+         if(colourArray[0][4]==null||(isSameFace==false && colourArray[0][4] != colourList.get(4) && colourArray[1][4] != colourList.get(4)&& colourArray[2][4] != colourList.get(4)&& colourArray[3][4] != colourList.get(4)&& colourArray[4][4] != colourList.get(4)&& colourArray[5][4] != colourList.get(4)&& colourArray[5][4] != colourList.get(4))){   
+         System.out.println("The colours recieved from new face");  
+         for(int i = 0; i < list.size(); i++) { 
+           colourArray[faceNumber][i] = colourList.get(i);
+           System.out.println(colourArray[faceNumber][i]);
+         }
+         faceNumber++;
+       }
+   
+     //System.out.println("The colours recieved from new face");
+     //if new face is shown put into colourArray 
+     //if(colourArray[0][4]==null||(isSameFace==false  )){   
+     //  for(int i = 0; i < list.size(); i++) { 
+     //   colourArray[faceNumber][i] = colourList.get(i);
+     //   System.out.println(colourArray[faceNumber][i]);
+       
+     //   }
+     //faceNumber++;
+     //}
+  }
+  
+  else{
+      list.clear();
+      colourList.clear();
+  }
+     
+     
+  displayContoursBoundingBoxesRed();
+  displayContoursBoundingBoxesYellow();
+  displayContoursBoundingBoxesOrange();
+  displayContoursBoundingBoxesBlue();
+  displayContoursBoundingBoxesGreen();
+  displayContoursBoundingBoxesWhite();
+    
   lights();
   stroke(0);
-  translate(width/2, height/2);
+  translate(900,300);
   rotateX(-mouseY*0.01);
   rotateY(mouseX*-0.01);
-  
   for(int i =0; i<27; i++){
     cubies[i].display();
   }
+
 }
 
-void keyPressed() {
+
+  void keyPressed() {
+
+    
+    if(keyCode==ENTER)
+    {
+      pressed = true;
+    }
+    if(pressed==true){
+       
+      for(int colorToChange=0 ; colorToChange<6; colorToChange++) {
+  
+        int hue = int(map(hue(c[colorToChange]), 0, 255, 0, 180));
+        colors[colorToChange] = c[colorToChange];
+        hues[colorToChange] = hue;
+        
+        println("color index " + (colorToChange) + ", value: " + hue);
+      }
+    }
+    //to configure colours, must be done before pressing ENTER
+    //red is 1, yellow is 2, orange 3, blue 4, green 5, white 6
+    if (key == '1') {
+    configureColourAt = 0;
+    
+  } else if (key == '2') {
+    configureColourAt = 1;
+    
+  } else if (key == '3') {
+    configureColourAt = 2;
+    
+  } else if (key == '4') {
+    configureColourAt = 3;
+  }
+  else if (key == '5') {
+    configureColourAt = 4;
+  }
+  else if (key == '6') {
+    configureColourAt = 5;
+  }
+  else if (key == 'f') {
+    F();
+    previousMoves.push('F');
+  }
+  else if (key == 'b'){
+    B();
+    previousMoves.push('B');
+  }
+  else if (key == 'l'){
+    L();
+    previousMoves.push('L');
+  }
+  else if (key == 'r'){
+    R();
+    previousMoves.push('R');
+  }
+  else if (key == 'u'){
+    U();
+    previousMoves.push('U');
+  }
+  else if (key == 'd'){
+    D();
+    previousMoves.push('D');
+  }
+  else if (key == 'F'){
+    F$();
+    previousMoves.push('f');
+  }
+  else if (key == 'B'){
+    B$();
+    previousMoves.push('b');
+  }
+  else if (key == 'L'){
+    L$();
+    previousMoves.push('l');
+  }
+  else if (key == 'R'){
+    R$();
+    previousMoves.push('r');
+  }
+  else if (key == 'U'){
+    U$();
+    previousMoves.push('u');
+  }
+  else if (key == 'D'){
+    D$();
+    previousMoves.push('d');
+  }
+  else if (keyCode == LEFT && !previousMoves.empty())
+  {
+    key = previousMoves.pop();
+    keyPressed1();
+  }
+  cubies=getRc();
+
+}
+  void keyPressed1() {
+
   if (key == 'f') 
     F();
   else if (key == 'b')
@@ -37,7 +374,7 @@ void keyPressed() {
   else if (key == 'r')
     R();
   else if (key == 'u')
-    U();  
+    U();
   else if (key == 'd')
     D();
   else if (key == 'F')
@@ -52,11 +389,8 @@ void keyPressed() {
     U$();
   else if (key == 'D')
     D$();
-    
   cubies=getRc();
-
 }
-
 /////Rubik's Cube//////
 
 //getRc() assigns each cubie with colours
@@ -209,7 +543,7 @@ void R$(){
 }
 
 void U(){
-  antiClockFace(4);
+  clockFace(4);
   int[] FaceNumbers = {0,3,2,1};
   int[] colourNumbers = {2,1,0,2,1,0,2,1,0,2,1,0};
   clockSides(FaceNumbers, colourNumbers);
@@ -500,6 +834,331 @@ class Cube {
     stroke(0); //outline cubies
     strokeWeight(10);
     drawCube(); // Farm out shape to another method
+
     popMatrix();
   }
 }
+
+//////////////////////
+  // Detect Functions
+  //////////////////////
+  
+void detectColors() {
+      
+    for (int i=0; i<hues.length; i++) {
+      
+      if (hues[i] <= 0) continue;
+      
+      opencv.loadImage(src);
+      opencv.useColor(HSB);
+      
+      // <4> Copy the Hue channel of our image into 
+      //     the gray channel, which we process.
+      opencv.setGray(opencv.getH().clone());
+      
+      int hueToDetect = hues[i];
+      //println("index " + i + " - hue to detect: " + hueToDetect);
+      
+      // <5> Filter the image based on the range of 
+      //     hue values that match the object we want to track.
+      opencv.inRange(hueToDetect-rangeWidth/2, hueToDetect+rangeWidth/2);
+      
+      //opencv.dilate();
+      opencv.erode();
+      
+      // TO DO:
+      // Add here some image filtering to detect blobs better
+      
+      // <6> Save the processed image for reference.
+      outputs[i] = opencv.getSnapshot();
+    
+    
+    // <7> Find contours in our range image.
+    //     Passing 'true' sorts them by descending area.
+    
+    if (outputs[0] != null) {
+      
+      opencv.loadImage(outputs[0]);
+      
+      contoursRed = opencv.findContours(true,true);
+       //displayContoursBoundingBoxesRed();
+    }
+     if (outputs[1] != null) {
+      
+         opencv.loadImage(outputs[1]);
+      
+         contoursYellow = opencv.findContours(true,true);
+    }
+     if (outputs[2] != null) {
+      
+         opencv.loadImage(outputs[2]);
+      
+         contoursOrange = opencv.findContours(true,true);
+    }
+     if (outputs[3] != null) {
+      
+        opencv.loadImage(outputs[3]);
+      
+        contoursBlue = opencv.findContours(true,true);
+    }
+      if (outputs[4] != null) {
+      
+        opencv.loadImage(outputs[4]);
+      
+        contoursGreen = opencv.findContours(true,true);
+    }
+       if (outputs[5] != null) {
+      
+        opencv.loadImage(outputs[5]);
+      
+        contoursWhite = opencv.findContours(true,true);
+    }
+  
+  }
+  meanFind();
+}
+  
+void meanFind(){
+  contoursAll.addAll(contoursWhite);
+  contoursAll.addAll(contoursGreen);
+  contoursAll.addAll(contoursOrange);
+  contoursAll.addAll(contoursRed);
+  contoursAll.addAll(contoursBlue);
+  contoursAll.addAll(contoursYellow);
+  contourMeanWidth = 0;
+  contourMeanHeight = 0;
+  int numberOfBigContours = 0;
+  for(int i = 0; i < contoursAll.size(); i++){
+    Contour contour = contoursAll.get(i);
+    Rectangle r = contour.getBoundingBox();
+    if((r.width > 60 && r.height > 60) && (r.width < 140 && r.height < 140) &&  (r.width > r.height - 10 || r.width < r.height + 10)){
+      contourMeanWidth += r.width;
+      contourMeanHeight += r.height;
+      numberOfBigContours++;
+    }
+  }
+  contourMeanHeight /= numberOfBigContours;
+  contourMeanWidth  /= numberOfBigContours;
+//  println(contourMeanHeight);
+//  println(contourMeanWidth);
+}
+  
+void sortCoordinates (){
+  
+     int[] yValues = new int [9];
+     int[] xValues = new int [9];
+     
+     
+     //sort y keeping x and colourName respective
+     int i=0;
+     for (Point p : list){
+       xValues[i]=p.x;
+       yValues[i]=p.y;
+       i++;
+     }
+      int j,k,first,temp1,temp2;
+      String colourTemp;
+      for( j= yValues.length-1; j>0; j--)
+      {
+        first = 0;
+        for(k = 1; k <= j; k++)
+        {
+          if( yValues[k] > yValues[first])
+          first = k;
+        }
+        temp1 = yValues[first];
+        temp2 = xValues[first];
+        colourTemp = colourList.get(first);
+        yValues[first] = yValues[j];
+        xValues[first] = xValues[j];
+        colourList.set(first,colourList.get(j));
+        yValues[j] = temp1;
+        xValues[j] = temp2;
+        colourList.set(j,colourTemp);
+      }
+      
+      //gets next 3 smallest y values and sorts thier smallest x's, keeping y and
+      //colour name respective to get correct order of colours
+      for(int z =0; z<3; z++)
+      {
+        first = 0;
+        for(int y = 1; y <= z; y++)
+        {
+          if( xValues[y] > xValues[first])
+          first = y;
+        }
+        temp1 = yValues[first];
+        temp2 = xValues[first];
+        colourTemp = colourList.get(first);
+        yValues[first] = yValues[z];
+        xValues[first] = xValues[z];
+        colourList.set(first,colourList.get(z));
+        yValues[z] = temp1;
+        xValues[z] = temp2;
+        colourList.set(z,colourTemp);
+      }
+      //gets next 3 smallest y values and sorts thier smallest x's, keeping y and
+      //colour name respective
+      for(int z =3; z<6; z++)
+      {
+        first = 3;
+        for(int y = 4; y <= z; y++)
+        {
+          if( xValues[y] > xValues[first])
+          first = y;
+        }
+        temp1 = yValues[first];
+        temp2 = xValues[first];
+        colourTemp = colourList.get(first);
+        yValues[first] = yValues[z];
+        xValues[first] = xValues[z];
+        colourList.set(first,colourList.get(z));
+        yValues[z] = temp1;
+        xValues[z] = temp2;
+        colourList.set(z,colourTemp);
+      }
+      //gets last 3 smallest y values and sorts thier smallest x's, keeping y and
+      //colour name respective
+      for(int z =6; z<9; z++)
+      {
+        first = 6;
+        for(int y = 7; y <= z; y++)
+        {
+          if( xValues[y] > xValues[first])
+          first = y;
+        }
+        temp1 = yValues[first];
+        temp2 = xValues[first];
+        colourTemp = colourList.get(first);
+        yValues[first] = yValues[z];
+        xValues[first] = xValues[z];
+        colourList.set(first,colourList.get(z));
+        yValues[z] = temp1;
+        xValues[z] = temp2;
+        colourList.set(z,colourTemp);
+      }
+}
+  
+  
+  
+  void displayContoursBoundingBoxesRed() {
+    
+    for (int i=0; i<contoursRed.size(); i++) {
+      
+      Contour contour = contoursRed.get(i);
+      Rectangle r = contour.getBoundingBox();
+      
+      if ((r.width > contourMeanWidth-5 && r.height > contourMeanHeight-5 && (r.width > r.height - 5 || r.width < r.height + 5))){
+      
+        stroke(255, 0, 0);
+        fill(255, 0, 0, 150);
+        strokeWeight(2);
+        rect(r.x, r.y, r.width, r.height);
+        list.add(new Point(r.x,r.y));
+        colourList.add(new String("Red "));
+      }
+    }
+  }
+  
+  void displayContoursBoundingBoxesYellow() {
+    
+    for (int i=0; i<contoursYellow.size(); i++) {
+      
+      Contour contour = contoursYellow.get(i);
+      Rectangle r = contour.getBoundingBox();
+      if ((r.width > contourMeanWidth-5 && r.height > contourMeanHeight-5 && (r.width > r.height - 5 || r.width < r.height + 5)))
+      {
+        stroke(255, 0, 0);
+        fill(255, 255, 0, 150);
+        strokeWeight(2);
+        rect(r.x, r.y, r.width, r.height);
+        list.add(new Point(r.x,r.y));
+        colourList.add(new String("Yellow "));
+      }
+    }
+  }
+  
+  void displayContoursBoundingBoxesOrange() {
+    
+    for (int i=0; i<contoursOrange.size(); i++) {
+      
+      Contour contour = contoursOrange.get(i);
+      Rectangle r = contour.getBoundingBox();
+      
+      if ((r.width > contourMeanWidth-5 && r.height > contourMeanHeight-5 && (r.width > r.height - 5 || r.width < r.height + 5)))
+     { 
+        stroke(255, 0, 0);
+        fill(255, 69, 0, 150);
+        strokeWeight(2);
+        rect(r.x, r.y, r.width, r.height);
+        list.add(new Point(r.x,r.y));
+        colourList.add(new String("Orange "));
+      }
+    }
+  }
+  
+  void displayContoursBoundingBoxesBlue() {
+    
+    for (int i=0; i<contoursBlue.size(); i++) {
+      
+      Contour contour = contoursBlue.get(i);
+      Rectangle r = contour.getBoundingBox();
+      
+      if ((r.width > contourMeanWidth-5 && r.height > contourMeanHeight-5 && (r.width > r.height - 5 || r.width < r.height + 5)))
+     {
+      
+      stroke(255, 0, 0);
+      fill(0, 0, 255, 150);
+      strokeWeight(2);
+      rect(r.x, r.y, r.width, r.height);
+      list.add(new Point(r.x,r.y));
+      colourList.add(new String("Blue "));
+       }
+    }
+  }
+  void displayContoursBoundingBoxesGreen() {
+    
+    for (int i=0; i<contoursGreen.size(); i++) {
+      
+      Contour contour = contoursGreen.get(i);
+      Rectangle r = contour.getBoundingBox();
+      
+      if ((r.width > contourMeanWidth-5 && r.height > contourMeanHeight-5 && (r.width > r.height - 5 || r.width < r.height + 5)))
+     { 
+        stroke(255, 0, 0);
+        fill(0, 255, 0, 150);
+        strokeWeight(2);
+        rect(r.x, r.y, r.width, r.height);
+        list.add(new Point(r.x,r.y));
+        colourList.add(new String("Green "));
+      }
+    }
+  }
+  void displayContoursBoundingBoxesWhite() {
+    
+    for (int i=0; i<contoursWhite.size(); i++) {
+      
+      Contour contour = contoursWhite.get(i);
+      Rectangle r = contour.getBoundingBox();
+      
+      if ((r.width > contourMeanWidth-5 && r.height > contourMeanHeight-5 && (r.width > r.height - 5 || r.width < r.height + 5)))
+      {
+        stroke(255, 255, 255);
+        fill(255, 255, 255, 150);
+        strokeWeight(2);
+        rect(r.x, r.y, r.width, r.height);
+        list.add(new Point(r.x,r.y));
+        colourList.add(new String("White "));
+      }
+    }
+  }
+/////////  
+// Mouse
+////////  
+ void mousePressed() {
+  color colour = get(mouseX, mouseY);
+  c[configureColourAt] = colour; 
+  int hue = int(map(hue(c[configureColourAt]), 0, 255, 0, 180));
+  hues[colorToChange] = hue;
+  println("color index " + (configureColourAt) + ", value: " + hue);
+ }
