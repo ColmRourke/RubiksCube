@@ -17,22 +17,25 @@
   * The simulated RC should appear with a default state.
   * It will change state if all 6 faces have been found by the camera.
   * You can manipulate the RC as follows:
-  *     Press key according to the move to execute
-  *     Note Red faces should be pointing towards the user.
-  *          Move    Key
-  *          U       u
-  *          U'      U
-  *          D       d
-  *          D'      D
-  *          R       r
-  *          R'      R
-  *          L       l
-  *          L'      L
-  *          F       f
-  *          F'      F
-  *          D       d
-  *          D'      D
-  *  Previous Move  Left Arrow 
+  *     Press key according to the move you wish to execute
+  *          Move                    Key
+  *          U                        u
+  *          U'                       U
+  *          D                        d
+  *          D'                       D
+  *          R                        r
+  *          R'                       R
+  *          L                        l
+  *          L'                       L
+  *          F                        f
+  *          F'                       F
+  *          D                        d
+  *          D'                       D
+  *  Previous Move                    z
+  *  Rotate Rc Right along y axis     Right Arrow Key
+  *  Rotate Rc Left along y axis      Left Arrow Key
+  *  Rotate Rc UP along x axis        Up Arrow Key
+  *  Rotate Rc Down along x axis      Down Arrow Key
   **/
 
 
@@ -59,12 +62,15 @@ import java.util.*;
   int maxColors = 6;
   int faceNumber = 0;  
   int rangeWidth = 5;
+  int sizeRange = 0;
   int colorToChange = 0;
   int configureColourAt = 0;
   double contourMeanWidth,contourMeanHeight;
   boolean pressed = false;  //Press enter to set to true and begin when configured
   PImage[] outputs;
   PImage backgroundImage;
+  String[][][] possibilities = new String [4][6][9];
+  String[][] state = new String [6][9];
   Stack<Character> previousMoves = new Stack<Character>();
 
 String [][] colourNames = {
@@ -74,6 +80,14 @@ String [][] colourNames = {
         {"g","g","r","b","w","w","o","y","b"},
         {"o","r","r","o","b","o","g","g","w"},
         {"o","w","r","b","g","y","w","o","o"}};
+
+//String [][] colourNames = {
+//        {"r","r","r","r","r","r","r","r","r"},
+//        {"y","y","y","y","y","y","y","y","y"},
+//        {"o","o","o","o","o","o","o","o","o"},
+//        {"w","w","w","w","w","w","w","w","w"},
+//        {"b","b","b","b","b","b","b","b","b"},
+//        {"g","g","g","g","g","g","g","g","g"}};
 Cube [] cubies = new Cube[27];
 
 void setup() {
@@ -193,7 +207,7 @@ void draw() {
   //   }
   //}
       //when only 9 colours are detected
-  if( list.size() == 9 && pressed==true){
+  if( list.size() == 9 && pressed==true && colourArray[5][4] == null){
      
      sortCoordinates();            //sort coordinates so they are in order of the colours of the cube face
      boolean isSameFace = false;   //checks if it's face has been entered before
@@ -243,6 +257,10 @@ void draw() {
      //faceNumber++;
      //}
   }
+  else if (colourArray[5][4] != null)
+  {
+      combineFace();
+    }
   
   else{
       list.clear();
@@ -355,10 +373,26 @@ void draw() {
     D$();
     previousMoves.push('d');
   }
-  else if (keyCode == LEFT && !previousMoves.empty())
+  else if (key == 'z' && !previousMoves.empty())
   {
     key = previousMoves.pop();
     keyPressed1();
+  }
+   else if (keyCode == RIGHT)
+  {
+    rotateRight();
+  }
+  else if (keyCode == LEFT)
+  {
+    rotateLeft();
+  }
+  else if (keyCode == UP)
+  {
+    rotateUp();
+  }
+  else if (keyCode == DOWN)
+  {
+    rotateDown();
   }
   cubies=getRc();
 
@@ -470,12 +504,12 @@ Cube[] getRc (){
   RC[20] = new Cube(100, 0, 0, 0, "none", "none", "none");
   
   ////the center pieces////  their positions are wrong
-  RC[21] = new Cube(100, 0, 0, 1, "r", "none", "none");
-  RC[22] = new Cube(100, -1, 0, 0, "none", "y", "none");
-  RC[23] = new Cube(100, 0, 0, -1, "o", "none", "none");
-  RC[24] = new Cube(100, 1, 0, 0, "none", "w", "none");
-  RC[25] = new Cube(100, 0, 1, 0, "none", "none", "b");
-  RC[26] = new Cube(100, 0, -1, 0, "none", "none", "g");
+  RC[21] = new Cube(100, 0, 0, 1, colourNames[0][4], "none", "none");
+  RC[22] = new Cube(100, -1, 0, 0, "none",colourNames[1][4] , "none");
+  RC[23] = new Cube(100, 0, 0, -1, colourNames[2][4], "none", "none");
+  RC[24] = new Cube(100, 1, 0, 0, "none", colourNames[3][4], "none");
+  RC[25] = new Cube(100, 0, 1, 0, "none", "none", colourNames[4][4]);
+  RC[26] = new Cube(100, 0, -1, 0, "none", "none", colourNames[5][4]);
 
  return RC;
 
@@ -660,6 +694,124 @@ void antiClockSides(int faceNumbers[], int colourNumbers[]){
  temp2 = new String[12];
 }
 
+void rotateLeft(){
+  String[] temp = colourNames[0];
+  colourNames[0] = colourNames[1];
+  colourNames[1] = colourNames[2];
+  colourNames[2] = colourNames[3];
+  colourNames[3] = temp;
+  clockFace(4);
+  antiClockFace(5);
+}
+
+void rotateRight(){
+  String[] temp = colourNames[0];
+  colourNames[0] = colourNames[3];
+  colourNames[3] = colourNames[2];
+  colourNames[2] = colourNames[1];
+  colourNames[1] = temp;
+  clockFace(5);
+  antiClockFace(4);
+}
+void rotateDown(){
+  clockFace(3);
+  antiClockFace(1);
+  String[] temp = new String [9];
+  temp[0] = colourNames[0][0];
+  temp[1] = colourNames[0][1];
+  temp[2] = colourNames[0][2];
+  temp[3] = colourNames[0][3];
+  temp[4] = colourNames[0][4];
+  temp[5] = colourNames[0][5];
+  temp[6] = colourNames[0][6];
+  temp[7] = colourNames[0][7];
+  temp[8] = colourNames[0][8];
+  
+  colourNames[0][0] = colourNames[4][0];
+  colourNames[0][1] = colourNames[4][1];
+  colourNames[0][2] = colourNames[4][2];
+  colourNames[0][3] = colourNames[4][3];
+  colourNames[0][4] = colourNames[4][4];
+  colourNames[0][5] = colourNames[4][5];
+  colourNames[0][6] = colourNames[4][6];
+  colourNames[0][7] = colourNames[4][7];
+  colourNames[0][8] = colourNames[4][8];
+  //far side has opposite numbering 
+  colourNames[4][0] = colourNames[2][8];
+  colourNames[4][1] = colourNames[2][7];
+  colourNames[4][2] = colourNames[2][6];
+  colourNames[4][3] = colourNames[2][5];
+  colourNames[4][4] = colourNames[2][4];
+  colourNames[4][5] = colourNames[2][3];
+  colourNames[4][6] = colourNames[2][2];
+  colourNames[4][7] = colourNames[2][1];
+  colourNames[4][8] = colourNames[2][0];
+  //convert back 
+  colourNames[2][0] = colourNames[5][8];
+  colourNames[2][1] = colourNames[5][7];
+  colourNames[2][2] = colourNames[5][6];
+  colourNames[2][3] = colourNames[5][5];
+  colourNames[2][4] = colourNames[5][4];
+  colourNames[2][5] = colourNames[5][3];
+  colourNames[2][6] = colourNames[5][2];
+  colourNames[2][7] = colourNames[5][1];
+  colourNames[2][8] = colourNames[5][0];
+  //colourNames[4] = colourNames[2];
+  //colourNames[2] = colourNames[5];
+  colourNames[5]=temp;
+}
+void rotateUp(){
+  String[] temp = new String [9];
+  temp[0] = colourNames[0][0];
+  temp[1] = colourNames[0][1];
+  temp[2] = colourNames[0][2];
+  temp[3] = colourNames[0][3];
+  temp[4] = colourNames[0][4];
+  temp[5] = colourNames[0][5];
+  temp[6] = colourNames[0][6];
+  temp[7] = colourNames[0][7];
+  temp[8] = colourNames[0][8];
+  
+  colourNames[0][0] = colourNames[5][0];
+  colourNames[0][1] = colourNames[5][1];
+  colourNames[0][2] = colourNames[5][2];
+  colourNames[0][3] = colourNames[5][3];
+  colourNames[0][4] = colourNames[5][4];
+  colourNames[0][5] = colourNames[5][5];
+  colourNames[0][6] = colourNames[5][6];
+  colourNames[0][7] = colourNames[5][7];
+  colourNames[0][8] = colourNames[5][8];
+  
+  colourNames[5][0] = colourNames[2][8];
+  colourNames[5][1] = colourNames[2][7];
+  colourNames[5][2] = colourNames[2][6];
+  colourNames[5][3] = colourNames[2][5];
+  colourNames[5][4] = colourNames[2][4];
+  colourNames[5][5] = colourNames[2][3];
+  colourNames[5][6] = colourNames[2][2];
+  colourNames[5][7] = colourNames[2][1];
+  colourNames[5][8] = colourNames[2][0];
+  //convert back 
+  colourNames[2][0] = colourNames[4][8];
+  colourNames[2][1] = colourNames[4][7];
+  colourNames[2][2] = colourNames[4][6];
+  colourNames[2][3] = colourNames[4][5];
+  colourNames[2][4] = colourNames[4][4];
+  colourNames[2][5] = colourNames[4][3];
+  colourNames[2][6] = colourNames[4][2];
+  colourNames[2][7] = colourNames[4][1];
+  colourNames[2][8] = colourNames[4][0];
+ // colourNames[5] = colourNames[2];
+ // colourNames[2] = colourNames[4];
+  colourNames[4] = temp;
+  clockFace(1);
+  antiClockFace(3);
+}
+
+///////
+// RC
+//////
+
 class Cube {
   // Position, velocity vectors
   PVector position;
@@ -816,7 +968,7 @@ class Cube {
     vertices[23] = new PVector(point, point, point);                           
     
   } 
-  // Cube shape itself
+  // Drawing the Cube shape itself
   void drawCube() {
     // Draw cube
     for (int i=0; i<6; i++) {
@@ -828,6 +980,7 @@ class Cube {
       endShape();
     }
   }
+  
   void display() {
     pushMatrix();
     translate(position.x, position.y, position.z);
@@ -840,8 +993,8 @@ class Cube {
 }
 
 //////////////////////
-  // Detect Functions
-  //////////////////////
+// Detect Functions
+//////////////////////
   
 void detectColors() {
       
@@ -917,7 +1070,8 @@ void detectColors() {
   }
   meanFind();
 }
-  
+
+//Finds the average of the size of contours that are above the threshold size of 60
 void meanFind(){
   contoursAll.addAll(contoursWhite);
   contoursAll.addAll(contoursGreen);
@@ -931,7 +1085,7 @@ void meanFind(){
   for(int i = 0; i < contoursAll.size(); i++){
     Contour contour = contoursAll.get(i);
     Rectangle r = contour.getBoundingBox();
-    if((r.width > 60 && r.height > 60) && (r.width < 140 && r.height < 140) &&  (r.width > r.height - 10 || r.width < r.height + 10)){
+    if((r.width > 60 && r.height > 60) && (r.width < 140 && r.height < 140) &&  (r.width > r.height - sizeRange || r.width < r.height + sizeRange)){
       contourMeanWidth += r.width;
       contourMeanHeight += r.height;
       numberOfBigContours++;
@@ -939,10 +1093,9 @@ void meanFind(){
   }
   contourMeanHeight /= numberOfBigContours;
   contourMeanWidth  /= numberOfBigContours;
-//  println(contourMeanHeight);
-//  println(contourMeanWidth);
 }
   
+// Finds the order of the colors shown by the Rubik's Cube
 void sortCoordinates (){
   
      int[] yValues = new int [9];
@@ -1048,7 +1201,7 @@ void sortCoordinates (){
       Contour contour = contoursRed.get(i);
       Rectangle r = contour.getBoundingBox();
       
-      if ((r.width > contourMeanWidth-5 && r.height > contourMeanHeight-5 && (r.width > r.height - 5 || r.width < r.height + 5))){
+      if ((r.width > contourMeanWidth-sizeRange && r.height > contourMeanHeight-sizeRange && r.width < contourMeanWidth+sizeRange && r.height < contourMeanHeight+sizeRange)){
       
         stroke(255, 0, 0);
         fill(255, 0, 0, 150);
@@ -1066,7 +1219,7 @@ void sortCoordinates (){
       
       Contour contour = contoursYellow.get(i);
       Rectangle r = contour.getBoundingBox();
-      if ((r.width > contourMeanWidth-5 && r.height > contourMeanHeight-5 && (r.width > r.height - 5 || r.width < r.height + 5)))
+      if ((r.width > contourMeanWidth-sizeRange && r.height > contourMeanHeight-sizeRange && r.width < contourMeanWidth+sizeRange && r.height < contourMeanHeight+sizeRange))
       {
         stroke(255, 0, 0);
         fill(255, 255, 0, 150);
@@ -1085,7 +1238,7 @@ void sortCoordinates (){
       Contour contour = contoursOrange.get(i);
       Rectangle r = contour.getBoundingBox();
       
-      if ((r.width > contourMeanWidth-5 && r.height > contourMeanHeight-5 && (r.width > r.height - 5 || r.width < r.height + 5)))
+      if ((r.width > contourMeanWidth-sizeRange && r.height > contourMeanHeight-sizeRange && r.width < contourMeanWidth+sizeRange && r.height < contourMeanHeight+sizeRange))
      { 
         stroke(255, 0, 0);
         fill(255, 69, 0, 150);
@@ -1104,7 +1257,7 @@ void sortCoordinates (){
       Contour contour = contoursBlue.get(i);
       Rectangle r = contour.getBoundingBox();
       
-      if ((r.width > contourMeanWidth-5 && r.height > contourMeanHeight-5 && (r.width > r.height - 5 || r.width < r.height + 5)))
+      if ((r.width > contourMeanWidth-sizeRange && r.height > contourMeanHeight-sizeRange && r.width < contourMeanWidth+sizeRange && r.height < contourMeanHeight+sizeRange))
      {
       
       stroke(255, 0, 0);
@@ -1123,7 +1276,7 @@ void sortCoordinates (){
       Contour contour = contoursGreen.get(i);
       Rectangle r = contour.getBoundingBox();
       
-      if ((r.width > contourMeanWidth-5 && r.height > contourMeanHeight-5 && (r.width > r.height - 5 || r.width < r.height + 5)))
+      if ((r.width > contourMeanWidth-sizeRange && r.height > contourMeanHeight-sizeRange && r.width < contourMeanWidth+sizeRange && r.height < contourMeanHeight+sizeRange))
      { 
         stroke(255, 0, 0);
         fill(0, 255, 0, 150);
@@ -1141,7 +1294,7 @@ void sortCoordinates (){
       Contour contour = contoursWhite.get(i);
       Rectangle r = contour.getBoundingBox();
       
-      if ((r.width > contourMeanWidth-5 && r.height > contourMeanHeight-5 && (r.width > r.height - 5 || r.width < r.height + 5)))
+      if ((r.width > contourMeanWidth-sizeRange && r.height > contourMeanHeight-sizeRange && r.width < contourMeanWidth+sizeRange && r.height < contourMeanHeight+sizeRange))
       {
         stroke(255, 255, 255);
         fill(255, 255, 255, 150);
@@ -1152,6 +1305,229 @@ void sortCoordinates (){
       }
     }
   }
+  
+//Combines the faces of the RC together so each face is upwards relative to the other faces
+  
+void combineFace(){
+  state = colourArray;
+  possibilities[0][0]=colourArray[0];
+  rotateFace(colourArray);
+  while(check()==true){
+      state=colourArray;
+      possibilities[0][0]=colourArray[0];
+      rotateFace(colourArray);
+  }
+}
+void rotateFace (String face[][])
+  {
+
+    String[] newFace = new String [9];
+    
+    for(int twist =0; twist<4; twist++){
+      //System.out.println("");
+      
+      for(int faceToRotate = 1; faceToRotate<6; faceToRotate++){
+
+        newFace[2]=face[faceToRotate][0];
+        newFace[5]=face[faceToRotate][1];
+        newFace[8]=face[faceToRotate][2];
+        newFace[1]=face[faceToRotate][3];
+        newFace[4]=face[faceToRotate][4];
+        newFace[7]=face[faceToRotate][5];
+        newFace[0]=face[faceToRotate][6];
+        newFace[3]=face[faceToRotate][7];
+        newFace[6]=face[faceToRotate][8];
+
+        face[faceToRotate] = newFace;
+        possibilities[twist][faceToRotate] = newFace;
+        newFace = new String [9];
+      }
+    }  
+  }
+boolean check (){
+    int count =0; //counts the number of possibilities after rules are applied 
+    String[][] combination= new String [6][9];
+    combination[0]=possibilities[0][0];//red
+
+    for(int twist0 =0; twist0<4; twist0++ ){
+      for(int twist1 =0; twist1<4; twist1++ ){
+        for(int twist2 =0; twist2<4; twist2++ ){
+          for(int twist3 =0; twist3<4; twist3++ ){
+            for(int twist4 =0; twist4<4; twist4++ ){
+              
+              combination[1]=possibilities[twist0][1]; //yellow
+              combination[2]=possibilities[twist1][2]; //orange
+              combination[3]=possibilities[twist2][3]; //white 
+              combination[4]=possibilities[twist3][4]; //blue
+              combination[5]=possibilities[twist4][5]; //green
+
+              ////////corners////////////
+              String [] cubie = new String[8];
+              String [] edges = new String[12];
+              //red yellow white
+              cubie[0] = combination[0][0] + combination[3][2] + combination[4][6];
+              //red yellow blue
+              cubie[1] = combination[0][2] + combination[4][8] + combination[1][0];
+              //red white green
+              cubie[2]= combination[0][6] + combination[3][8] + combination[5][0];
+              //red green yellow
+              cubie[3]= combination[0][8] + combination[5][2] + combination[1][6];
+              //blue orange white
+              cubie[4] = combination[4][0] + combination[2][2] + combination[3][0];
+              //blue orange yellow
+              cubie[5] = combination[4][2] + combination[2][0] + combination[1][2];
+              //orange white green
+              cubie[6] = combination[2][8] + combination[3][6] + combination[5][6];
+              //orange yellow green
+              cubie[7] = combination[2][6] + combination[1][8] + combination[5][8];
+              
+              //edges////////
+              //red white
+              edges[0]= combination[0][3] + combination[3][5] ;
+              //red blue
+              edges[1]= combination[0][1] + combination[4][7] ;
+              //red yellow
+              edges[2]= combination[0][5] + combination[1][3] ;
+              //red green
+              edges[3]= combination[0][7] + combination[5][1] ;
+              //yellow blue
+              edges[4]= combination[1][1] + combination[4][5] ;
+              //yellow green
+              edges[5]= combination[1][7] + combination[5][5] ;
+              //white blue
+              edges[6]= combination[3][1] + combination[4][3] ;
+              //white green
+              edges[7]= combination[3][7] + combination[5][3] ;
+              //orange blue
+              edges[8]= combination[2][1] + combination[4][1] ;
+              //orange yellow
+              edges[9]= combination[2][3] + combination[1][5] ;
+              //orange white
+              edges[10]=combination[2][5] + combination[3][3] ;
+              //orange green 
+              edges[11]= combination[2][7] + combination[5][7] ;
+
+              //Rule 1: a colour and it's opposite cannot be contained on one cubie
+              //Rule 2: no two colours are the same on a singular cubie
+              //Rule 3: no two cubies are identical 
+                            boolean pass = true;
+              for(int i =0; i<8; i++){
+                for(int j =0; j<3; j++){
+                  //Applying rule 1 and 2 for corners
+                  char opp = opposite( cubie[i].charAt(j));
+                  char one = cubie[i].charAt(0);
+                  char two = cubie[i].charAt(1);
+                  char three = cubie[i].charAt(2);
+                  if(cubie[i].indexOf(opp)>=0 || one==two ||
+                      two==three|| one==three)
+                  {
+                    pass=false;
+                    //System.out.println("error");
+                    break;
+                  }
+                }
+              }
+                           //apply rule 1 and 2 to edges 
+              for(int i =0; i<12; i++){
+                for(int j =0; j<2; j++){
+                  char opp = opposite( edges[i].charAt(j));
+                  char one = edges[i].charAt(0);
+                  char two = edges[i].charAt(1);
+                  if(edges[i].indexOf(opp)>=0 || one==two)
+                  {
+                    pass=false;
+                    //System.out.println("error");
+                    break;
+                  }
+                }
+              }
+              //Rule 3: check none of the corners are the same
+              if(pass == true){
+                for(int i=0; i<7; i++){
+                  for(int j = 7; j>i; j--){
+                    if(cubie[i].equals(cubie[j])){
+                      pass=false;
+                    }
+                  }
+                }
+              }
+              //apply rule 3 to different orientations of corners
+              if(pass == true){
+                String mix[] = new String [7];
+                for(int i=0; i<7; i++){
+                  mix[0] = cubie[i].charAt(0) +""+ cubie[i].charAt(2)+"" + cubie[i].charAt(1) ;
+                  mix[1] = cubie[i].charAt(1) +""+ cubie[i].charAt(0)+"" + cubie[i].charAt(2);
+                  mix[2] = cubie[i].charAt(1) +""+ cubie[i].charAt(2)+"" + cubie[i].charAt(0);
+                  mix[3] = cubie[i].charAt(2) +""+ cubie[i].charAt(0)+"" + cubie[i].charAt(1);
+                  mix[4] = cubie[i].charAt(2) +""+ cubie[i].charAt(1)+"" + cubie[i].charAt(0);
+                  for(int j = 7; j>i; j--){
+                    for( int k =0; k<5; k++){
+                      if(cubie[i].equals(cubie[j])||cubie[j].equals(mix[k])){
+                        pass=false;
+                      }
+                    }
+                  }
+                }
+              }
+              //apply rule 3 to edges in different orientations
+              if(pass == true){
+                for(int i=0; i<11; i++){
+                  String mix = edges[i].charAt(1) +""+ edges[i].charAt(0);
+                  for(int j = 11; j>i; j--){
+                    if(edges[i].equals(edges[j])||edges[j].equals(mix)){
+                      pass=false;    
+                    }
+                  }
+                }
+              }
+              //if all rules are satisfied, print corners and edges
+              if(pass == true){
+                count++;
+                System.out.println("");
+                for(int i=0; i<8; i++){
+                     System.out.println(cubie[i]);
+                }
+                //System.out.println(twist1+""+twist2+""+twist3+""+twist4+"");
+                for(int j=0; j<12; j++)
+                {
+                  System.out.println(edges[j]);
+                }
+                System.out.println("");
+                colourNames[1]=combination[1]; //yellow
+                colourNames[2]=combination[2]; //orange
+                colourNames[3]=combination[3]; //white 
+                colourNames[4]=combination[4]; //blue
+                colourNames[5]=combination[5]; //green
+              }
+            }
+          }
+        }
+      }
+    }
+    return false;
+  }
+  //gets polar opposite colour of p
+  char opposite(char p){
+    
+    if(p=='r'){
+      return 'o';
+    }
+    else if(p=='o')
+      return 'r';
+    
+    else if(p=='g')
+      return 'b';
+    
+    else if(p=='b')
+      return 'g';
+    
+    else if(p=='w')
+      return 'y';
+    
+    else 
+      return 'w';
+  }
+
 /////////  
 // Mouse
 ////////  
