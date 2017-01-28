@@ -61,12 +61,13 @@ import java.util.*;
   int[] colors;
   int maxColors = 6;
   int faceNumber = 0;  
-  int rangeWidth = 5;
-  int sizeRange = 0;
+  int rangeWidth = 10;
+  int sizeRange = 10;
   int colorToChange = 0;
   int configureColourAt = 0;
   double contourMeanWidth,contourMeanHeight;
   boolean pressed = false;  //Press enter to set to true and begin when configured
+  boolean combine = false;
   PImage[] outputs;
   PImage backgroundImage;
   String[][][] possibilities = new String [4][6][9];
@@ -166,48 +167,15 @@ void draw() {
     text("Red[1],Yellow[2],Orange[3],Blue[4],Green[5],White[6]", 10, 45);
     text("Click Enter to start, please configure first", 10, 65);
    
-    
-     
-    
-    //when only 9 colours are detected
-  //if( list.size() == 9 && pressed==true){
-  // // println("9");
-     
-  //   sortCoordinates(); //sort coordinates so they are in order of the colours of the cube face
-  //  //checks if it's face has been entered before
-  //   boolean isSameFace = false;
-  //   for(int otherFaces=0; otherFaces<6; otherFaces++){
-  //     println(colourList.get(4) + " " + colourArray[otherFaces][4]);
-  //    // if(colourArray[otherFaces][4] == colourList.get(4))  //is centre colour that is viewed already present in colourArray
-  //    if(colourArray[0][4]==null){
-  //    for(int i = 0; i < list.size(); i++) { 
-  //      colourArray[faceNumber][i] = colourList.get(i);
-  //      System.out.println(colourArray[faceNumber][i]);
-       
-  //      }
-      
-  //    }
-  //     else if( colourArray[otherFaces][4]!=null&&colourList.get(4).contains(colourArray[otherFaces][4] ))
-  //     {
-  //       isSameFace=true;
-  //       list.clear();
-  //       colourList.clear();
-  //      // println("234");
-  //       break;
-  //     }
-  //   }
-  //   //if new face is shown put into colourArray 
-  //   if(colourArray[0][4]==null||(isSameFace==false  )){   
-  //     for(int i = 0; i < list.size(); i++) { 
-  //      colourArray[faceNumber][i] = colourList.get(i);
-  //      System.out.println(colourArray[faceNumber][i]);
-       
-  //      }
-  //   faceNumber++;
-  //   }
-  //}
       //when only 9 colours are detected
-  if( list.size() == 9 && pressed==true && colourArray[5][4] == null){
+       
+  if (colourArray[5][4] != null && combine==false)
+  {
+      combineFace();
+      combine = true;
+      cubies = getRc();
+    }
+  else if( list.size() == 9 && pressed==true && colourArray[5][4] == null){
      
      sortCoordinates();            //sort coordinates so they are in order of the colours of the cube face
      boolean isSameFace = false;   //checks if it's face has been entered before
@@ -219,10 +187,10 @@ void draw() {
        //colours on first face is stored in colourArray, then prints colours of first face!
        if(colourArray[0][4]==null){
          System.out.println(" First face colours are : ");
-         for(int i = 0; i < list.size(); i++) { 
-           colourArray[faceNumber][i] = colourList.get(i);  
-           System.out.println(colourArray[faceNumber][i]);     
-        }
+         for(int i = 0; i < list.size(); i++) {  
+           System.out.println(colourList.get(i));
+         }
+        System.out.println("Is this correct? Y/N");
         faceNumber++;
       }
       
@@ -240,28 +208,13 @@ void draw() {
          if(colourArray[0][4]==null||(isSameFace==false && colourArray[0][4] != colourList.get(4) && colourArray[1][4] != colourList.get(4)&& colourArray[2][4] != colourList.get(4)&& colourArray[3][4] != colourList.get(4)&& colourArray[4][4] != colourList.get(4)&& colourArray[5][4] != colourList.get(4)&& colourArray[5][4] != colourList.get(4))){   
          System.out.println("The colours recieved from new face");  
          for(int i = 0; i < list.size(); i++) { 
-           colourArray[faceNumber][i] = colourList.get(i);
-           System.out.println(colourArray[faceNumber][i]);
+           System.out.println(colourList.get(i));
          }
+         System.out.println("Is this correct? Y/N");         
          faceNumber++;
        }
    
-     //System.out.println("The colours recieved from new face");
-     //if new face is shown put into colourArray 
-     //if(colourArray[0][4]==null||(isSameFace==false  )){   
-     //  for(int i = 0; i < list.size(); i++) { 
-     //   colourArray[faceNumber][i] = colourList.get(i);
-     //   System.out.println(colourArray[faceNumber][i]);
-       
-     //   }
-     //faceNumber++;
-     //}
-  }
-  else if (colourArray[5][4] != null)
-  {
-      combineFace();
-    }
-  
+  }  
   else{
       list.clear();
       colourList.clear();
@@ -373,6 +326,13 @@ void draw() {
     D$();
     previousMoves.push('d');
   }
+  else if (key == 'y' || key == 'Y')
+    for(int i = 0; i < list.size(); i++) {
+      colourArray[faceNumber][i] = colourList.get(i);
+    }
+  else if (faceNumber!=0 && (key == 'n' || key == 'N'))
+     faceNumber--; 
+    
   else if (key == 'z' && !previousMoves.empty())
   {
     key = previousMoves.pop();
@@ -1208,7 +1168,7 @@ void sortCoordinates (){
         strokeWeight(2);
         rect(r.x, r.y, r.width, r.height);
         list.add(new Point(r.x,r.y));
-        colourList.add(new String("Red "));
+        colourList.add(new String("r"));
       }
     }
   }
@@ -1226,7 +1186,7 @@ void sortCoordinates (){
         strokeWeight(2);
         rect(r.x, r.y, r.width, r.height);
         list.add(new Point(r.x,r.y));
-        colourList.add(new String("Yellow "));
+        colourList.add(new String("y"));
       }
     }
   }
@@ -1245,7 +1205,7 @@ void sortCoordinates (){
         strokeWeight(2);
         rect(r.x, r.y, r.width, r.height);
         list.add(new Point(r.x,r.y));
-        colourList.add(new String("Orange "));
+        colourList.add(new String("o"));
       }
     }
   }
@@ -1265,7 +1225,7 @@ void sortCoordinates (){
       strokeWeight(2);
       rect(r.x, r.y, r.width, r.height);
       list.add(new Point(r.x,r.y));
-      colourList.add(new String("Blue "));
+      colourList.add(new String("b"));
        }
     }
   }
@@ -1283,7 +1243,7 @@ void sortCoordinates (){
         strokeWeight(2);
         rect(r.x, r.y, r.width, r.height);
         list.add(new Point(r.x,r.y));
-        colourList.add(new String("Green "));
+        colourList.add(new String("g"));
       }
     }
   }
@@ -1301,7 +1261,7 @@ void sortCoordinates (){
         strokeWeight(2);
         rect(r.x, r.y, r.width, r.height);
         list.add(new Point(r.x,r.y));
-        colourList.add(new String("White "));
+        colourList.add(new String("w"));
       }
     }
   }
@@ -1309,13 +1269,40 @@ void sortCoordinates (){
 //Combines the faces of the RC together so each face is upwards relative to the other faces
   
 void combineFace(){
-  state = colourArray;
-  possibilities[0][0]=colourArray[0];
-  rotateFace(colourArray);
+
+  String [][] sortFaces = new String[6][9];
+  for(int i = 0; i < 6; i++){
+    
+    if(colourArray[i][4].equals("r")){
+      sortFaces[0] = colourArray[i];
+  }
+    if(colourArray[i][4].equals("y")){
+      sortFaces[1] = colourArray[i];
+    }
+    if(colourArray[i][4].equals("o")){
+      sortFaces[2] = colourArray[i];
+    }
+    if(colourArray[i][4].equals("w")){
+      sortFaces[3] = colourArray[i];
+    }
+    if(colourArray[i][4].equals("b")){
+      sortFaces[4] = colourArray[i];
+    }
+    if(colourArray[i][4].equals("g")){
+      sortFaces[5] = colourArray[i];
+    }
+  }
+  state = sortFaces;
+  possibilities[0][0] = sortFaces[0];
+  colourNames[0] = sortFaces[0];
+  rotateFace(sortFaces);
+  
+  
   while(check()==true){
-      state=colourArray;
-      possibilities[0][0]=colourArray[0];
-      rotateFace(colourArray);
+      state=sortFaces;
+      possibilities[0][0]=sortFaces[0];
+      rotateFace(sortFaces);
+      
   }
 }
 void rotateFace (String face[][])
@@ -1341,11 +1328,10 @@ void rotateFace (String face[][])
         face[faceToRotate] = newFace;
         possibilities[twist][faceToRotate] = newFace;
         newFace = new String [9];
-      }
+    }
     }  
   }
 boolean check (){
-    int count =0; //counts the number of possibilities after rules are applied 
     String[][] combination= new String [6][9];
     combination[0]=possibilities[0][0];//red
 
@@ -1410,7 +1396,7 @@ boolean check (){
               //Rule 1: a colour and it's opposite cannot be contained on one cubie
               //Rule 2: no two colours are the same on a singular cubie
               //Rule 3: no two cubies are identical 
-                            boolean pass = true;
+              boolean pass = true;
               for(int i =0; i<8; i++){
                 for(int j =0; j<3; j++){
                   //Applying rule 1 and 2 for corners
@@ -1482,11 +1468,11 @@ boolean check (){
               }
               //if all rules are satisfied, print corners and edges
               if(pass == true){
-                count++;
                 System.out.println("");
                 for(int i=0; i<8; i++){
                      System.out.println(cubie[i]);
                 }
+                println(1516);
                 //System.out.println(twist1+""+twist2+""+twist3+""+twist4+"");
                 for(int j=0; j<12; j++)
                 {
