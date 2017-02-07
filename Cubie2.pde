@@ -1,5 +1,5 @@
 /**
-  * Author: Colm Rourke   Date:2/12/16
+  * Author: Colm Rourke   Date:7/2/16
   * Simulates Rubik's Cube (RC), allows user to manipluate this RC as if it were
   * a real RC. 
   * Camera takes in state of real RC and this is the beginging state of the 
@@ -18,7 +18,7 @@
   * It will change state if all 6 faces have been found by the camera.
   * You can manipulate the RC as follows:
   *     Press key according to the move you wish to execute
-  *          Move                    Key
+  *         Move                     Key
   *          U                        u
   *          U'                       U
   *          D                        d
@@ -32,6 +32,7 @@
   *          D                        d
   *          D'                       D
   *  Previous Move                    z
+  * Return to solved state            s
   *  Rotate Rc Right along y axis     Right Arrow Key
   *  Rotate Rc Left along y axis      Left Arrow Key
   *  Rotate Rc UP along x axis        Up Arrow Key
@@ -51,7 +52,6 @@ import java.util.*;
   OpenCV opencv;
   PImage src;
   ArrayList<Contour> contoursYellow, contoursRed, contoursOrange, contoursBlue, contoursGreen, contoursWhite, contoursAll; //contours for different colours
-  
   // <1> Set the range of Hue values for our filter
   ArrayList<Point> list = new ArrayList<Point>(); //coordinates of colour points on cube
   ArrayList<String> colourList = new ArrayList<String>(); //colour of face
@@ -61,13 +61,14 @@ import java.util.*;
   int[] colors;
   int maxColors = 6;
   int faceNumber = 0;  
-  int rangeWidth = 10;
-  int sizeRange = 10;
+  int rangeWidth = 10;  //hue range
+  int sizeRange = 10;   //detect contours within range
   int colorToChange = 0;
   int configureColourAt = 0;
   double contourMeanWidth,contourMeanHeight;
   boolean pressed = false;  //Press enter to set to true and begin when configured
   boolean combine = false;
+  boolean verify = false;
   PImage[] outputs;
   PImage backgroundImage;
   String[][][] possibilities = new String [4][6][9];
@@ -89,6 +90,7 @@ String [][] colourNames = {
 //        {"w","w","w","w","w","w","w","w","w"},
 //        {"b","b","b","b","b","b","b","b","b"},
 //        {"g","g","g","g","g","g","g","g","g"}};
+
 Cube [] cubies = new Cube[27];
 
 void setup() {
@@ -171,11 +173,12 @@ void draw() {
        
   if (colourArray[5][4] != null && combine==false)
   {
+      println("All face colours have been received\n Updating Rubik's Cube.");
       combineFace();
       combine = true;
       cubies = getRc();
     }
-  else if( list.size() == 9 && pressed==true && colourArray[5][4] == null){
+  else if( list.size() == 9 && pressed==true && colourArray[5][4] == null && verify == false){
      
      sortCoordinates();            //sort coordinates so they are in order of the colours of the cube face
      boolean isSameFace = false;   //checks if it's face has been entered before
@@ -185,13 +188,13 @@ void draw() {
 
        
        //colours on first face is stored in colourArray, then prints colours of first face!
-       if(colourArray[0][4]==null){
+       if(colourArray[0][4]==null && verify == false){
          System.out.println(" First face colours are : ");
          for(int i = 0; i < list.size(); i++) {  
            System.out.println(colourList.get(i));
          }
         System.out.println("Is this correct? Y/N");
-        faceNumber++;
+        verify = true;
       }
       
        
@@ -205,16 +208,17 @@ void draw() {
          }
      }
          //if centre colour is new then store it and print the colours of the face
-         if(colourArray[0][4]==null||(isSameFace==false && colourArray[0][4] != colourList.get(4) && colourArray[1][4] != colourList.get(4)&& colourArray[2][4] != colourList.get(4)&& colourArray[3][4] != colourList.get(4)&& colourArray[4][4] != colourList.get(4)&& colourArray[5][4] != colourList.get(4)&& colourArray[5][4] != colourList.get(4))){   
+         if((verify == false && isSameFace==false && colourArray[0][4] != colourList.get(4) && colourArray[1][4] != colourList.get(4)&& colourArray[2][4] != colourList.get(4)&& colourArray[3][4] != colourList.get(4)&& colourArray[4][4] != colourList.get(4)&& colourArray[5][4] != colourList.get(4)&& colourArray[5][4] != colourList.get(4))){   
          System.out.println("The colours recieved from new face");  
          for(int i = 0; i < list.size(); i++) { 
            System.out.println(colourList.get(i));
          }
          System.out.println("Is this correct? Y/N");         
-         faceNumber++;
-       }
+         verify = true;
+        } 
+      }
    
-  }  
+    
   else{
       list.clear();
       colourList.clear();
@@ -242,23 +246,19 @@ void draw() {
 
   void keyPressed() {
 
-    
+    //to configure colours, must be done before pressing ENTER
     if(keyCode==ENTER)
     {
-      pressed = true;
-    }
-    if(pressed==true){
-       
+      pressed = true;       
+      //save colours seen, print the colour index and its value
       for(int colorToChange=0 ; colorToChange<6; colorToChange++) {
-  
         int hue = int(map(hue(c[colorToChange]), 0, 255, 0, 180));
         colors[colorToChange] = c[colorToChange];
         hues[colorToChange] = hue;
-        
         println("color index " + (colorToChange) + ", value: " + hue);
       }
     }
-    //to configure colours, must be done before pressing ENTER
+    
     //red is 1, yellow is 2, orange 3, blue 4, green 5, white 6
     if (key == '1') {
     configureColourAt = 0;
@@ -278,6 +278,7 @@ void draw() {
   else if (key == '6') {
     configureColourAt = 5;
   }
+  //Rubik's Cube Moves
   else if (key == 'f') {
     F();
     previousMoves.push('F');
@@ -326,18 +327,32 @@ void draw() {
     D$();
     previousMoves.push('d');
   }
-  else if (key == 'y' || key == 'Y')
-    for(int i = 0; i < list.size(); i++) {
+  //User verifies if camera sees the correct state of cube, if so store state in colourArray
+ else if(verify == true && (key == 'y' || key == 'Y')){
+   verify = false;
+   for(int i = 0; i < colourList.size(); i++) {
       colourArray[faceNumber][i] = colourList.get(i);
-    }
-  else if (faceNumber!=0 && (key == 'n' || key == 'N'))
-     faceNumber--; 
-    
+      }
+   faceNumber++;
+   colourList.clear();
+   list.clear();
+ }
+ 
+  else if (verify == true && (faceNumber!=0 && (key == 'n' || key == 'N'))){
+   verify = false; 
+   colourList.clear();
+   list.clear();
+  }
+  //Previous Move  
   else if (key == 'z' && !previousMoves.empty())
   {
     key = previousMoves.pop();
     keyPressed1();
   }
+  else if (key == 's'){
+    returnToSolvedState();
+  }
+  //Rotate cube 
    else if (keyCode == RIGHT)
   {
     rotateRight();
@@ -357,6 +372,7 @@ void draw() {
   cubies=getRc();
 
 }
+//Executes moves from previous moves
   void keyPressed1() {
 
   if (key == 'f') 
@@ -385,9 +401,11 @@ void draw() {
     D$();
   cubies=getRc();
 }
+///////////////////////
 /////Rubik's Cube//////
+///////////////////////
 
-//getRc() assigns each cubie with colours
+//getRc() assigns each cubie with colours from ColourArray
 //Cube[] RC is composed of 8 corners, 12 edges, 6 centers and a middle hidden cube
 // each cubie has an x,y,z position along with a colour in the x,y,z (cx,cy,cz) direction
 
@@ -463,7 +481,7 @@ Cube[] getRc (){
   ////the black centre cube////
   RC[20] = new Cube(100, 0, 0, 0, "none", "none", "none");
   
-  ////the center pieces////  their positions are wrong
+  ////the center pieces//// 
   RC[21] = new Cube(100, 0, 0, 1, colourNames[0][4], "none", "none");
   RC[22] = new Cube(100, -1, 0, 0, "none",colourNames[1][4] , "none");
   RC[23] = new Cube(100, 0, 0, -1, colourNames[2][4], "none", "none");
@@ -476,6 +494,8 @@ Cube[] getRc (){
 }
 
 /////MOVES//////
+//F,B,U,D,R,L are the moves implemented in this program with thier counter clockwise equivalent
+// counter clockwise moves are named after the clockwise move followed by $
 
 void F (){
   clockFace(0);
@@ -654,6 +674,8 @@ void antiClockSides(int faceNumbers[], int colourNumbers[]){
  temp2 = new String[12];
 }
 
+//Change face that the moves will be relevant to
+
 void rotateLeft(){
   String[] temp = colourNames[0];
   colourNames[0] = colourNames[1];
@@ -768,10 +790,11 @@ void rotateUp(){
   antiClockFace(3);
 }
 
-///////
-// RC
-//////
+////////
+// Cubes
+////////
 
+//Cube set up, sets vertices and allocates colours to each face
 class Cube {
   // Position, velocity vectors
   PVector position;
@@ -974,19 +997,21 @@ void detectColors() {
       
       // <5> Filter the image based on the range of 
       //     hue values that match the object we want to track.
-      opencv.inRange(hueToDetect-rangeWidth/2, hueToDetect+rangeWidth/2);
+      opencv.inRange((hueToDetect-rangeWidth/2)%180, (hueToDetect+rangeWidth/2)%180);
       
       //opencv.dilate();
       opencv.erode();
-      
+      opencv.erode();
+
       // TO DO:
       // Add here some image filtering to detect blobs better
-      
+      // sharpen image using "unsharp mask" algorithm
+      //opencv.adaptiveThreshold(591, 1);
       // <6> Save the processed image for reference.
       outputs[i] = opencv.getSnapshot();
     
     
-    // <7> Find contours in our range image.
+    // <7> Find contours in our range image, done seperately to display different coloured contour retangles relative to the colour it sees.
     //     Passing 'true' sorts them by descending area.
     
     if (outputs[0] != null) {
@@ -994,7 +1019,6 @@ void detectColors() {
       opencv.loadImage(outputs[0]);
       
       contoursRed = opencv.findContours(true,true);
-       //displayContoursBoundingBoxesRed();
     }
      if (outputs[1] != null) {
       
@@ -1031,6 +1055,11 @@ void detectColors() {
   meanFind();
 }
 
+  //////////
+  //Contours
+  //////////
+
+
 //Finds the average of the size of contours that are above the threshold size of 60
 void meanFind(){
   contoursAll.addAll(contoursWhite);
@@ -1054,106 +1083,10 @@ void meanFind(){
   contourMeanHeight /= numberOfBigContours;
   contourMeanWidth  /= numberOfBigContours;
 }
-  
-// Finds the order of the colors shown by the Rubik's Cube
-void sortCoordinates (){
-  
-     int[] yValues = new int [9];
-     int[] xValues = new int [9];
-     
-     
-     //sort y keeping x and colourName respective
-     int i=0;
-     for (Point p : list){
-       xValues[i]=p.x;
-       yValues[i]=p.y;
-       i++;
-     }
-      int j,k,first,temp1,temp2;
-      String colourTemp;
-      for( j= yValues.length-1; j>0; j--)
-      {
-        first = 0;
-        for(k = 1; k <= j; k++)
-        {
-          if( yValues[k] > yValues[first])
-          first = k;
-        }
-        temp1 = yValues[first];
-        temp2 = xValues[first];
-        colourTemp = colourList.get(first);
-        yValues[first] = yValues[j];
-        xValues[first] = xValues[j];
-        colourList.set(first,colourList.get(j));
-        yValues[j] = temp1;
-        xValues[j] = temp2;
-        colourList.set(j,colourTemp);
-      }
-      
-      //gets next 3 smallest y values and sorts thier smallest x's, keeping y and
-      //colour name respective to get correct order of colours
-      for(int z =0; z<3; z++)
-      {
-        first = 0;
-        for(int y = 1; y <= z; y++)
-        {
-          if( xValues[y] > xValues[first])
-          first = y;
-        }
-        temp1 = yValues[first];
-        temp2 = xValues[first];
-        colourTemp = colourList.get(first);
-        yValues[first] = yValues[z];
-        xValues[first] = xValues[z];
-        colourList.set(first,colourList.get(z));
-        yValues[z] = temp1;
-        xValues[z] = temp2;
-        colourList.set(z,colourTemp);
-      }
-      //gets next 3 smallest y values and sorts thier smallest x's, keeping y and
-      //colour name respective
-      for(int z =3; z<6; z++)
-      {
-        first = 3;
-        for(int y = 4; y <= z; y++)
-        {
-          if( xValues[y] > xValues[first])
-          first = y;
-        }
-        temp1 = yValues[first];
-        temp2 = xValues[first];
-        colourTemp = colourList.get(first);
-        yValues[first] = yValues[z];
-        xValues[first] = xValues[z];
-        colourList.set(first,colourList.get(z));
-        yValues[z] = temp1;
-        xValues[z] = temp2;
-        colourList.set(z,colourTemp);
-      }
-      //gets last 3 smallest y values and sorts thier smallest x's, keeping y and
-      //colour name respective
-      for(int z =6; z<9; z++)
-      {
-        first = 6;
-        for(int y = 7; y <= z; y++)
-        {
-          if( xValues[y] > xValues[first])
-          first = y;
-        }
-        temp1 = yValues[first];
-        temp2 = xValues[first];
-        colourTemp = colourList.get(first);
-        yValues[first] = yValues[z];
-        xValues[first] = xValues[z];
-        colourList.set(first,colourList.get(z));
-        yValues[z] = temp1;
-        xValues[z] = temp2;
-        colourList.set(z,colourTemp);
-      }
-}
-  
-  
-  
+
+ 
+ //For each colour find its contours, display contours, then add them to the coordinate and colour lists
+ 
   void displayContoursBoundingBoxesRed() {
     
     for (int i=0; i<contoursRed.size(); i++) {
@@ -1266,6 +1199,104 @@ void sortCoordinates (){
     }
   }
   
+// Finds the order of the colors shown by the Rubik's Cube
+void sortCoordinates (){
+  
+     int[] yValues = new int [9];
+     int[] xValues = new int [9];
+     
+     
+     //sort y keeping x and colourName respective
+     int i=0;
+     for (Point p : list){
+       xValues[i]=p.x;
+       yValues[i]=p.y;
+       i++;
+     }
+      int j,k,first,temp1,temp2;
+      String colourTemp;
+      for( j= yValues.length-1; j>0; j--)
+      {
+        first = 0;
+        for(k = 1; k <= j; k++)
+        {
+          if( yValues[k] > yValues[first])
+          first = k;
+        }
+        temp1 = yValues[first];
+        temp2 = xValues[first];
+        colourTemp = colourList.get(first);
+        yValues[first] = yValues[j];
+        xValues[first] = xValues[j];
+        colourList.set(first,colourList.get(j));
+        yValues[j] = temp1;
+        xValues[j] = temp2;
+        colourList.set(j,colourTemp);
+      }
+      
+      //gets next 3 smallest y values and sorts thier smallest x's, keeping y and
+      //colour name respective to get correct order of colours
+      for(int z =0; z<3; z++)
+      {
+        first = 0;
+        for(int y = 1; y <= z; y++)
+        {
+          if( xValues[y] > xValues[first])
+          first = y;
+        }
+        temp1 = yValues[first];
+        temp2 = xValues[first];
+        colourTemp = colourList.get(first);
+        yValues[first] = yValues[z];
+        xValues[first] = xValues[z];
+        colourList.set(first,colourList.get(z));
+        yValues[z] = temp1;
+        xValues[z] = temp2;
+        colourList.set(z,colourTemp);
+      }
+      //gets next 3 smallest y values and sorts thier smallest x's, keeping y and
+      //colour name respective
+      for(int z =3; z<6; z++)
+      {
+        first = 3;
+        for(int y = 4; y <= z; y++)
+        {
+          if( xValues[y] > xValues[first])
+          first = y;
+        }
+        temp1 = yValues[first];
+        temp2 = xValues[first];
+        colourTemp = colourList.get(first);
+        yValues[first] = yValues[z];
+        xValues[first] = xValues[z];
+        colourList.set(first,colourList.get(z));
+        yValues[z] = temp1;
+        xValues[z] = temp2;
+        colourList.set(z,colourTemp);
+      }
+      //gets last 3 smallest y values and sorts thier smallest x's, keeping y and
+      //colour name respective
+      for(int z =6; z<9; z++)
+      {
+        first = 6;
+        for(int y = 7; y <= z; y++)
+        {
+          if( xValues[y] > xValues[first])
+          first = y;
+        }
+        temp1 = yValues[first];
+        temp2 = xValues[first];
+        colourTemp = colourList.get(first);
+        yValues[first] = yValues[z];
+        xValues[first] = xValues[z];
+        colourList.set(first,colourList.get(z));
+        yValues[z] = temp1;
+        xValues[z] = temp2;
+        colourList.set(z,colourTemp);
+      }
+}
+  
+  
 //Combines the faces of the RC together so each face is upwards relative to the other faces
   
 void combineFace(){
@@ -1331,6 +1362,8 @@ void rotateFace (String face[][])
     }
     }  
   }
+  
+  //check creates every possible solutions in problem space, using RC rules
 boolean check (){
     String[][] combination= new String [6][9];
     combination[0]=possibilities[0][0];//red
@@ -1472,18 +1505,13 @@ boolean check (){
                 for(int i=0; i<8; i++){
                      System.out.println(cubie[i]);
                 }
-                println(1516);
                 //System.out.println(twist1+""+twist2+""+twist3+""+twist4+"");
                 for(int j=0; j<12; j++)
                 {
                   System.out.println(edges[j]);
                 }
                 System.out.println("");
-                colourNames[1]=combination[1]; //yellow
-                colourNames[2]=combination[2]; //orange
-                colourNames[3]=combination[3]; //white 
-                colourNames[4]=combination[4]; //blue
-                colourNames[5]=combination[5]; //green
+                colourNames=combination; 
               }
             }
           }
@@ -1513,6 +1541,18 @@ boolean check (){
     else 
       return 'w';
   }
+  
+void returnToSolvedState(){
+ String [][] x = {
+        {"r","r","r","r","r","r","r","r","r"},
+        {"y","y","y","y","y","y","y","y","y"},
+        {"o","o","o","o","o","o","o","o","o"},
+        {"w","w","w","w","w","w","w","w","w"},
+        {"b","b","b","b","b","b","b","b","b"},
+        {"g","g","g","g","g","g","g","g","g"}};
+ colourNames = x;
+   
+}
 
 /////////  
 // Mouse
