@@ -64,6 +64,7 @@ import java.util.*;
   int sizeRange = 10;   //detect contours within range
   int colorToChange = 0;
   int configureColourAt = 0;
+  int pressedYes;
   double contourMeanWidth,contourMeanHeight;
   boolean pressed = false;  //Press enter to set to true and begin when configured
   boolean combine = false;
@@ -110,7 +111,7 @@ void setup() {
     c[4] = color(32,113,62);   //green
     c[5] = color(125,135,159);  //white
     
-    
+    pressedYes = 0;  
     // Array for detection colors
     colors = new int[maxColors];
     hues = new int[maxColors];
@@ -164,50 +165,27 @@ void draw() {
     text("Click Enter to start, please configure first", 10, 65);
    
       //when only 9 colours are detected
-       
-  if (colourArray[5][4] != null && combine==false)
-  {
-      for(int x = 0; x < 6; x++){
-        for(int y = 0; y < 9; y++){
-          println(colourArray[x][y]);
-        }}
-      println("All face colours have been received\nUpdating Rubik's Cube...");
-      combineFace();
-      combine = true;
-      cubies = getRc(); 
-    }
-  else if( colourList.size() == 9 && pressed==true && colourArray[5][4] == null && verify == false){
+  
+
+  if( colourList.size() == 9 && pressed==true && verify == false && !(pressedYes >= 6)){
      
      sortCoordinates();            //sort coordinates so they are in order of the colours of the cube face
      boolean isSameFace = false;   //checks if it's face has been entered before
      System.out.println("The middle colour recieved        The middle colours already seen");
      for(int otherFaces = 0; otherFaces < 6; otherFaces++){
-         System.out.println(colourList.get(4) + "                 " + colourArray[otherFaces][4]); //prints the list of colours recieved and the colours stored already
-
-       
-       //colours on first face is stored in colourArray, then prints colours of first face!
-       if(colourArray[0][4]==null && verify == false){
-         System.out.println(" First face colours are : ");
-         for(int i = 0; i < colourList.size(); i++) {  
-           System.out.println(colourList.get(i));
-           approve[faceNumber][i] = colourList.get(i);
-         }
-        System.out.println("Is this correct? Y/N");
-        verify = true;
-      }
-      
+       System.out.println(colourList.get(4) + "                                         " + colourArray[otherFaces][4]); //prints the list of colours recieved and the colours stored already
        
          //if middle colour had been seen before, clear lists and scan again
-         else if( colourArray[otherFaces][4] != null && colourList.get(4).contains(colourArray[otherFaces][4] ))
+         if( colourArray[otherFaces][4] != null && colourList.get(4).contains(colourArray[otherFaces][4] ))
          {
            isSameFace = true;
            list.clear();
            colourList.clear();
            break;
          }
-     }
+     
          //if centre colour is new then store it and print the colours of the face
-       if((verify == false && isSameFace==false && colourArray[0][4] != null)){   //////////////////////////////////////////////////////////////
+       if((verify == false && isSameFace == false )){   //////////////////////////////////////////////////////////////
          System.out.println("The colours recieved from new face");  
          for(int i = 0; i < colourList.size(); i++) { 
            System.out.println(colourList.get(i));
@@ -217,7 +195,20 @@ void draw() {
          verify = true;
         } 
       }
-   
+  }
+  else if (pressedYes == 6 && combine==false && verify == false)
+  {
+      for(int x = 0; x < 6; x++){
+        for(int y = 0; y < 9; y++){
+          println(colourArray[x][y]);
+        }
+      }
+      println("All face colours have been received\nUpdating Rubik's Cube...");
+      combineFace();
+      combine = true;
+      colourNames = approve;
+      cubies = getRc(); 
+    }
     
   else{
       list.clear();
@@ -329,21 +320,20 @@ void draw() {
   }
   //User verifies if camera sees the correct state of cube, if so store state in colourArray
  else if(verify == true && (key == 'y' || key == 'Y')){
-   verify = false;
-   for(int i = 0; i < colourList.size(); i++) {
-      colourArray = approve;
-      }
+   colourArray = approve;
    faceNumber++;
    colourList.clear();
    list.clear();
    println("Great next face!");
+   verify = false;
+   pressedYes++;
  }
  
-  else if (verify == true && (faceNumber!=0 && (key == 'n' || key == 'N'))){
-   verify = false; 
+  else if (verify == true && (key == 'n' || key == 'N')){ 
    colourList.clear();
    list.clear();
    println("Try again");
+   verify = false;
   }
   //Previous Move  
   else if (key == 'z' && !previousMoves.empty())
@@ -1368,7 +1358,7 @@ void combineFace(){
       rotateFace(sortFaces);
       
   }
-  combine = false;
+  //combine = false;
 }
 void rotateFace (String face[][])
   {
@@ -1535,17 +1525,22 @@ boolean check (){
               }
               //if all rules are satisfied, print corners and edges
               if(pass == true){
-                //System.out.println("");
-                //for(int i=0; i<8; i++){
-                //     System.out.println(cubie[i]);
-                //}
-                ////System.out.println(twist1+""+twist2+""+twist3+""+twist4+"");
-                //for(int j=0; j<12; j++)
-                //{
-                //  System.out.println(edges[j]);
-                //}
-                //System.out.println("");
-                colourNames=combination; 
+                System.out.println("");
+                for(int i=0; i<8; i++){
+                     System.out.println(cubie[i]);
+                }
+                //System.out.println(twist1+""+twist2+""+twist3+""+twist4+"");
+                for(int j=0; j<12; j++)
+                {
+                  System.out.println(edges[j]);
+                }
+                System.out.println("");
+                approve[0] = combination[0];
+                approve[1] = combination[1];
+                approve[2] = combination[2];
+                approve[3] = combination[3];
+                approve[4] = combination[4];
+                approve[5] = combination[5];
               }
             }
           }
@@ -1598,3 +1593,5 @@ void returnToSolvedState(){
   hues[colorToChange] = hue;
   println("color index " + (configureColourAt) + ", value: " + hue);
  }
+ 
+ 
