@@ -12,7 +12,7 @@
   * 1=Red, 2=Yellow, 3=Orange, 4=Blue, 5=Green, 6=White
   * Press on numberical key [1-6] and click on the associated colour above to
   * track it. Press the enter key when all the colours have been stored.
-  * Show all faces to the camera. 
+  * Show all faces to the camera. Make sure that blue face is on top when capturing the red face.
   * 
   * The simulated RC should appear with a default state.
   * It will change state if all 6 faces have been found by the camera.
@@ -40,8 +40,8 @@
   **/
 
 
-
-
+import javax.swing.JOptionPane;
+import org.kociemba.twophase.Search;
 import processing.opengl.*;
 import gab.opencv.*;
 import processing.video.*;
@@ -185,10 +185,11 @@ void draw() {
          }
      
          //if centre colour is new then store it and print the colours of the face
-       if((verify == false && isSameFace == false )){   //////////////////////////////////////////////////////////////
-         System.out.println("The colours recieved from new face");  
+       if((verify == false && isSameFace == false )){  
+         System.out.println("The colours recieved from new face"); 
+         printList(colourList);
          for(int i = 0; i < colourList.size(); i++) { 
-           System.out.println(colourList.get(i));
+           //System.out.println(colourList.get(i));
            approve[faceNumber][i] = colourList.get(i);
        }
          System.out.println("Is this correct? Y/N");         
@@ -198,10 +199,11 @@ void draw() {
   }
   else if (pressedYes == 6 && combine==false && verify == false)
   {
+      
       for(int x = 0; x < 6; x++){
-        for(int y = 0; y < 9; y++){
-          println(colourArray[x][y]);
-        }
+        //for(int y = 0; y < 9; y++){
+          printArray(colourArray[x]);
+        //}
       }
       println("All face colours have been received\nUpdating Rubik's Cube...");
       combineFace();
@@ -344,6 +346,8 @@ void draw() {
   else if (key == 's'){
     returnToSolvedState();
   }
+  else if(key == 'h')
+    solve();
   //Rotate cube 
    else if (keyCode == RIGHT)
   {
@@ -1525,15 +1529,15 @@ boolean check (){
               }
               //if all rules are satisfied, print corners and edges
               if(pass == true){
-                System.out.println("");
-                for(int i=0; i<8; i++){
-                     System.out.println(cubie[i]);
-                }
-                //System.out.println(twist1+""+twist2+""+twist3+""+twist4+"");
-                for(int j=0; j<12; j++)
-                {
-                  System.out.println(edges[j]);
-                }
+                //System.out.println("");
+                //for(int i=0; i<8; i++){
+                //     System.out.println(cubie[i]);
+                //}
+                ////System.out.println(twist1+""+twist2+""+twist3+""+twist4+"");
+                //for(int j=0; j<12; j++)
+                //{
+                //  System.out.println(edges[j]);
+                //}
                 System.out.println("");
                 approve[0] = combination[0];
                 approve[1] = combination[1];
@@ -1593,5 +1597,73 @@ void returnToSolvedState(){
   hues[colorToChange] = hue;
   println("color index " + (configureColourAt) + ", value: " + hue);
  }
- 
- 
+
+void printList(ArrayList<String> colourList2){
+  for(int i =0; i < 3; i++){
+   System.out.print("|  "); 
+   System.out.print(colourList2.get(i) + "  |");
+  }
+  System.out.println();
+  for(int i = 3; i < 6; i++){
+    System.out.print("|  ");
+    System.out.print(colourList2.get(i) + "  |");
+  }
+  System.out.println();
+  for(int i = 6; i < 9; i++){
+   System.out.print("|  ");
+   System.out.print(colourList2.get(i) + "  |");
+  }
+  System.out.println();
+}
+
+void printArray(String[][] colourArray2){
+  for(int i =0; i < 3; i++){
+   System.out.print("|  "); 
+   System.out.print(colourArray2[i] + "  |");
+  }
+  System.out.println();
+  for(int i = 3; i < 6; i++){
+    System.out.print("| ");
+   System.out.print(colourArray2[i] + "  |");
+  }
+  System.out.println();
+  for(int i = 6; i < 9; i++){
+   System.out.print("| ");
+   System.out.print(colourArray2[i] + "  |");
+  }
+  System.out.println();
+}
+
+  void solve(){
+    
+    String [][] order = new String[6][9];
+    order[0] = colourNames[4];
+    order[1] = colourNames[1];
+    order[2] = colourNames[0];
+    order[3] = colourNames[5];
+    order[4] = colourNames[3];
+    order[5] = colourNames[2];
+    String cubeString = "" ;
+    for(int index = 0; index < 6; index++)
+    {
+      for(int j = 0; j < 9; j++)
+      {
+        cubeString += order[index][j]; 
+      }
+    }
+    System.out.println(cubeString);
+    cubeString = cubeString.replace('w' , 'L');
+    cubeString = cubeString.replace('r' , 'F');
+    cubeString = cubeString.replace('g' , 'D');
+    cubeString = cubeString.replace('y' , 'R');
+    cubeString = cubeString.replace('o' , 'B');
+    cubeString = cubeString.replace('b' , 'U');
+    
+    System.out.println(cubeString);
+    JOptionPane.showMessageDialog(null, "Cube Definiton String: " + cubeString);
+    // ++++++++++++++++++++++++ Call Search.solution method from package org.kociemba.twophase ++++++++++++++++++++++++
+        String result = Search.solution(cubeString, 24, 5, true);
+        System.out.println(result);
+        //JOptionPane.showMessageDialog(null, result);
+        // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  }
