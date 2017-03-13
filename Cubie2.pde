@@ -1,9 +1,11 @@
 /**
-  * Author: Colm Rourke   Date:7/2/17
+  * Author: Colm Rourke   Date:14/3/17
   * Simulates Rubik's Cube (RC), allows user to manipluate this RC as if it were
   * a real RC. 
   * Camera takes in state of real RC and this is the beginging state of the 
   * simulated RC
+  * It uses the OpenCV for Processing library By Greg Borenstein
+  * https://github.com/atduskgreg/open.cv-processing
   * It uses the OpenCV for Processing library By Greg Borenstein
   * https://github.com/atduskgreg/open.cv-processing
   *
@@ -31,8 +33,9 @@
   *          F'                       F
   *          D                        d
   *          D'                       D
+  *  Get Solution                     s  
   *  Previous Move                    z
-  *  Return to solved state           s
+  *  Return to solved state           h
   *  Rotate Rc Right along y axis     Right Arrow Key
   *  Rotate Rc Left along y axis      Left Arrow Key
   *  Rotate Rc UP along x axis        Up Arrow Key
@@ -115,9 +118,8 @@ void setup() {
     // Array for detection colors
     colors = new int[maxColors];
     hues = new int[maxColors];
-    
     outputs = new PImage[maxColors];
-    cubies=getRc();
+    cubies=getRc(); //Set colourNames to be the state displayed on RC
 }
 
 void draw() {
@@ -158,11 +160,11 @@ void draw() {
     // Print text if new color expected
     textSize(20);
     stroke(255);
-    fill(255);
+    fill(180,10,10);
     
-    text("Configure,press index[1-6] of colour and then click on that colour",10,25);
-    text("Red[1],Yellow[2],Orange[3],Blue[4],Green[5],White[6]", 10, 45);
-    text("Click Enter to start, please configure first", 10, 65);
+    text("Configure,press index[1-6] of colour and then click on that colour",3,25);
+    text("Red[1],Yellow[2],Orange[3],Blue[4],Green[5],White[6]", 3, 45);
+    text("Click Enter to start, please configure first", 3, 65);
    
       //when only 9 colours are detected
   
@@ -216,8 +218,8 @@ void draw() {
       list.clear();
       colourList.clear();
   }
-     
-     
+  
+  //Display Contours for all colours       
   displayContoursBoundingBoxesRed();
   displayContoursBoundingBoxesYellow();
   displayContoursBoundingBoxesOrange();
@@ -236,10 +238,24 @@ void draw() {
 
 }
 
-
+/////////  
+// Mouse
+////////  
+ void mousePressed() {
+  color colour = get(mouseX, mouseY);
+  c[configureColourAt] = colour; 
+  int hue = int(map(hue(c[configureColourAt]), 0, 255, 0, 180));
+  hues[colorToChange] = hue;
+  println("color index " + (configureColourAt) + ", value: " + hue);
+ }
+ 
+////////////  
+// Keyboard
+///////////   
   void keyPressed() {
 
-    //to configure colours, must be done before pressing ENTER
+    //When configuration of colours are done, user presses ENTER, colours are now stored.
+    //These are the colours our camera will detect
     if(keyCode==ENTER)
     {
       pressed = true;       
@@ -251,8 +267,10 @@ void draw() {
         println("color index " + (colorToChange) + ", value: " + hue);
       }
     }
-    
+    // When configuring, user presses a number [1-6] corrsponding to a colour
     //red is 1, yellow is 2, orange 3, blue 4, green 5, white 6
+    //Thus red is stored in the first index of array followed by yellow and so on.
+    
     if (key == '1') {
     configureColourAt = 0;
     
@@ -271,7 +289,13 @@ void draw() {
   else if (key == '6') {
     configureColourAt = 5;
   }
-  //Rubik's Cube Moves
+  ///////
+  // MOVES
+  ///////
+  //Button pressed corrsponds to move, available moves are F,B,L,R,D,U
+  // f is for F, b = B, and so on. Anticlockwise directions are the captial versions of the clockwise moves.
+  // ie key press b = move B, key press B = move B'
+  //Each move is stored in stack
   else if (key == 'f') {
     F();
     previousMoves.push('F');
@@ -343,10 +367,10 @@ void draw() {
     key = previousMoves.pop();
     keyPressed1();
   }
-  else if (key == 's'){
+  else if (key == 'f'){
     returnToSolvedState();
   }
-  else if(key == 'h')
+  else if(key == 's')
     solve();
   //Rotate cube 
    else if (keyCode == RIGHT)
@@ -368,7 +392,7 @@ void draw() {
   cubies=getRc();
 
 }
-//Executes moves from previous moves
+//Executes moves from stack that stores previous moves
   void keyPressed1() {
 
   if (key == 'f') 
@@ -397,6 +421,7 @@ void draw() {
     D$();
   cubies=getRc();
 }
+
 ///////////////////////
 /////Rubik's Cube//////
 ///////////////////////
@@ -489,7 +514,10 @@ Cube[] getRc (){
 
 }
 
-/////MOVES//////
+////////////////
+/////MOVES
+////////////////
+
 //F,B,U,D,R,L are the moves implemented in this program with thier counter clockwise equivalent
 // counter clockwise moves are named after the clockwise move followed by $
 
@@ -670,121 +698,6 @@ void antiClockSides(int faceNumbers[], int colourNumbers[]){
  temp2 = new String[12];
 }
 
-//Change face that the moves will be relevant to
-
-void rotateLeft(){
-  String[] temp = colourNames[0];
-  colourNames[0] = colourNames[1];
-  colourNames[1] = colourNames[2];
-  colourNames[2] = colourNames[3];
-  colourNames[3] = temp;
-  clockFace(4);
-  antiClockFace(5);
-}
-
-void rotateRight(){
-  String[] temp = colourNames[0];
-  colourNames[0] = colourNames[3];
-  colourNames[3] = colourNames[2];
-  colourNames[2] = colourNames[1];
-  colourNames[1] = temp;
-  clockFace(5);
-  antiClockFace(4);
-}
-void rotateDown(){
-  clockFace(3);
-  antiClockFace(1);
-  String[] temp = new String [9];
-  temp[0] = colourNames[0][0];
-  temp[1] = colourNames[0][1];
-  temp[2] = colourNames[0][2];
-  temp[3] = colourNames[0][3];
-  temp[4] = colourNames[0][4];
-  temp[5] = colourNames[0][5];
-  temp[6] = colourNames[0][6];
-  temp[7] = colourNames[0][7];
-  temp[8] = colourNames[0][8];
-  
-  colourNames[0][0] = colourNames[4][0];
-  colourNames[0][1] = colourNames[4][1];
-  colourNames[0][2] = colourNames[4][2];
-  colourNames[0][3] = colourNames[4][3];
-  colourNames[0][4] = colourNames[4][4];
-  colourNames[0][5] = colourNames[4][5];
-  colourNames[0][6] = colourNames[4][6];
-  colourNames[0][7] = colourNames[4][7];
-  colourNames[0][8] = colourNames[4][8];
-  //far side has opposite numbering 
-  colourNames[4][0] = colourNames[2][8];
-  colourNames[4][1] = colourNames[2][7];
-  colourNames[4][2] = colourNames[2][6];
-  colourNames[4][3] = colourNames[2][5];
-  colourNames[4][4] = colourNames[2][4];
-  colourNames[4][5] = colourNames[2][3];
-  colourNames[4][6] = colourNames[2][2];
-  colourNames[4][7] = colourNames[2][1];
-  colourNames[4][8] = colourNames[2][0];
-  //convert back 
-  colourNames[2][0] = colourNames[5][8];
-  colourNames[2][1] = colourNames[5][7];
-  colourNames[2][2] = colourNames[5][6];
-  colourNames[2][3] = colourNames[5][5];
-  colourNames[2][4] = colourNames[5][4];
-  colourNames[2][5] = colourNames[5][3];
-  colourNames[2][6] = colourNames[5][2];
-  colourNames[2][7] = colourNames[5][1];
-  colourNames[2][8] = colourNames[5][0];
-  //colourNames[4] = colourNames[2];
-  //colourNames[2] = colourNames[5];
-  colourNames[5]=temp;
-}
-void rotateUp(){
-  String[] temp = new String [9];
-  temp[0] = colourNames[0][0];
-  temp[1] = colourNames[0][1];
-  temp[2] = colourNames[0][2];
-  temp[3] = colourNames[0][3];
-  temp[4] = colourNames[0][4];
-  temp[5] = colourNames[0][5];
-  temp[6] = colourNames[0][6];
-  temp[7] = colourNames[0][7];
-  temp[8] = colourNames[0][8];
-  
-  colourNames[0][0] = colourNames[5][0];
-  colourNames[0][1] = colourNames[5][1];
-  colourNames[0][2] = colourNames[5][2];
-  colourNames[0][3] = colourNames[5][3];
-  colourNames[0][4] = colourNames[5][4];
-  colourNames[0][5] = colourNames[5][5];
-  colourNames[0][6] = colourNames[5][6];
-  colourNames[0][7] = colourNames[5][7];
-  colourNames[0][8] = colourNames[5][8];
-  
-  colourNames[5][0] = colourNames[2][8];
-  colourNames[5][1] = colourNames[2][7];
-  colourNames[5][2] = colourNames[2][6];
-  colourNames[5][3] = colourNames[2][5];
-  colourNames[5][4] = colourNames[2][4];
-  colourNames[5][5] = colourNames[2][3];
-  colourNames[5][6] = colourNames[2][2];
-  colourNames[5][7] = colourNames[2][1];
-  colourNames[5][8] = colourNames[2][0];
-  //convert back 
-  colourNames[2][0] = colourNames[4][8];
-  colourNames[2][1] = colourNames[4][7];
-  colourNames[2][2] = colourNames[4][6];
-  colourNames[2][3] = colourNames[4][5];
-  colourNames[2][4] = colourNames[4][4];
-  colourNames[2][5] = colourNames[4][3];
-  colourNames[2][6] = colourNames[4][2];
-  colourNames[2][7] = colourNames[4][1];
-  colourNames[2][8] = colourNames[4][0];
- // colourNames[5] = colourNames[2];
- // colourNames[2] = colourNames[4];
-  colourNames[4] = temp;
-  clockFace(1);
-  antiClockFace(3);
-}
 
 ////////
 // Cubes
@@ -804,8 +717,7 @@ class Cube {
 
   Cube(int s, int x,int y,int z, String cx, String cy, String cz) {
     this.sizeOfCube = s;
-    //colours
-    // Colors are hardcoded
+    // Colours are hardcoded
     quadBG[0] = color(255, 0, 0); //red          
     quadBG[1] = color(255, 255, 0); //yellow       
     quadBG[2] = color(255, 255, 255); //white            
@@ -817,7 +729,10 @@ class Cube {
     for(int i =0; i<quadBG.length; i++){
       quadBG[i] = color(0,0,0);
     }
+    
     //r y o w b g
+    /////x direction//////
+    
     if(cx.equals("r")){
        quadBG[0] = color(255, 0, 0); //red  
        quadBG[3] = color(255, 0, 0);           
@@ -847,7 +762,8 @@ class Cube {
        quadBG[3] = color(0, 128, 0); //orange          
     }
     
-    //y direction
+    /////y direction/////
+    
     if(cy.equals("r")){
        quadBG[1] = color(255, 0, 0); //red  
        quadBG[2] = color(255, 0, 0);           
@@ -876,7 +792,9 @@ class Cube {
        quadBG[1] = color(0, 128, 0); //red  
        quadBG[2] = color(0, 128, 0); //orange          
     }
-    //z direction
+    
+    /////z direction/////
+    
     if(cz.equals("r")){
        quadBG[4] = color(255, 0, 0); //red  
        quadBG[5] = color(255, 0, 0);           
@@ -908,10 +826,9 @@ class Cube {
        
     // Start in center
     position = new PVector();
-   
-    this.position.x=x*s; // gets x, -1<=x<=1, multpilies it by size of cube
-    this.position.y=y*s;
-    this.position.z=z*s;
+    this.position.x = x*s; // gets int x, -1<=x<=1, multpilies it by size of cube
+    this.position.y = y*s;
+    this.position.z = z*s;
     
     // cube composed of 6 quads
     //front
@@ -947,11 +864,11 @@ class Cube {
     vertices[23] = new PVector(point, point, point);                           
     
   } 
-  // Drawing the Cube shape itself
+  // Drawing the Cube 
   void drawCube() {
     // Draw cube
     for (int i=0; i<6; i++) {
-      fill(quadBG[i]);
+      fill(quadBG[i]);  //Colours
       beginShape(QUADS);
       for (int j=0; j<4; j++) {
         vertex(vertices[j+4*i].x, vertices[j+4*i].y, vertices[j+4*i].z);
@@ -966,14 +883,13 @@ class Cube {
     stroke(0); //outline cubies
     strokeWeight(10);
     drawCube(); // Farm out shape to another method
-
     popMatrix();
   }
 }
 
-//////////////////////
-// Detect Functions
-//////////////////////
+/////////////////////////////////////////
+// Detect Functions And Image Analysising
+/////////////////////////////////////////
   
 void detectColors() {
       
@@ -1082,9 +998,9 @@ void detectColors() {
   meanFind();
 }
 
-  //////////
+  ///////////////////
   //Contours
-  //////////
+  ///////////////////
 
 
 //Finds the average of the size of contours that are above the threshold size of 60
@@ -1231,8 +1147,9 @@ void sortCoordinates (){
   
      int[] yValues = new int [9];
      int[] xValues = new int [9];
-     
-     
+      int j,k,first,temp1,temp2;
+      String colourTemp;
+      
      //sort y keeping x and colourName respective
      int i=0;
      for (Point p : list){
@@ -1240,8 +1157,8 @@ void sortCoordinates (){
        yValues[i]=p.y;
        i++;
      }
-      int j,k,first,temp1,temp2;
-      String colourTemp;
+     
+     //sorts y values keeping x respective
       for( j= yValues.length-1; j>0; j--)
       {
         first = 0;
@@ -1323,9 +1240,11 @@ void sortCoordinates (){
       }
 }
   
-  
-//Combines the faces of the RC together so each face is upwards relative to the other faces
-  
+//////////////////////////
+//Orientations of faces
+//////////////////////////
+
+//Combines the faces of the RC together so each face is upwards relative to the other faces 
 void combineFace(){
 
   String [][] sortFaces = new String[6][9];
@@ -1362,16 +1281,16 @@ void combineFace(){
       rotateFace(sortFaces);
       
   }
-  //combine = false;
+  
 }
+
+//rotates the face only, no adjacent edge colours
 void rotateFace (String face[][])
   {
 
     String[] newFace = new String [9];
     
     for(int twist =0; twist<4; twist++){
-      //System.out.println("");
-      
       for(int faceToRotate = 1; faceToRotate<6; faceToRotate++){
 
         newFace[2]=face[faceToRotate][0];
@@ -1387,21 +1306,23 @@ void rotateFace (String face[][])
         face[faceToRotate] = newFace;
         possibilities[twist][faceToRotate] = newFace;
         newFace = new String [9];
-    }
+      }
     }  
   }
   
-  //check creates every possible solutions in problem space, using RC rules
+  //check creates every possible solutions in problem space, using RC rules eliminates unsolvable states, updates simulated  Cube state when solvable state found
 boolean check (){
     String[][] combination= new String [6][9];
     combination[0]=possibilities[0][0];//red
-
+    //each face is twisted 90 degrees creating all possibilities
     for(int twist0 =0; twist0<4; twist0++ ){
       for(int twist1 =0; twist1<4; twist1++ ){
         for(int twist2 =0; twist2<4; twist2++ ){
           for(int twist3 =0; twist3<4; twist3++ ){
             for(int twist4 =0; twist4<4; twist4++ ){
-              
+             
+              //RC of this combination is now stored
+             
               combination[1]=possibilities[twist0][1]; //yellow
               combination[2]=possibilities[twist1][2]; //orange
               combination[3]=possibilities[twist2][3]; //white 
@@ -1453,10 +1374,12 @@ boolean check (){
               edges[10]=combination[2][5] + combination[3][3] ;
               //orange green 
               edges[11]= combination[2][7] + combination[5][7] ;
-
+              
+              //This combination is now tested against 3 rules
               //Rule 1: a colour and it's opposite cannot be contained on one cubie
               //Rule 2: no two colours are the same on a singular cubie
               //Rule 3: no two cubies are identical 
+              
               boolean pass = true;
               for(int i =0; i<8; i++){
                 for(int j =0; j<3; j++){
@@ -1483,7 +1406,6 @@ boolean check (){
                   if(edges[i].indexOf(opp)>=0 || one==two)
                   {
                     pass=false;
-                    //System.out.println("error");
                     break;
                   }
                 }
@@ -1527,18 +1449,8 @@ boolean check (){
                   }
                 }
               }
-              //if all rules are satisfied, print corners and edges
+              //if all rules are satisfied, update simulate RC state
               if(pass == true){
-                //System.out.println("");
-                //for(int i=0; i<8; i++){
-                //     System.out.println(cubie[i]);
-                //}
-                ////System.out.println(twist1+""+twist2+""+twist3+""+twist4+"");
-                //for(int j=0; j<12; j++)
-                //{
-                //  System.out.println(edges[j]);
-                //}
-                System.out.println("");
                 approve[0] = combination[0];
                 approve[1] = combination[1];
                 approve[2] = combination[2];
@@ -1574,7 +1486,11 @@ boolean check (){
     else 
       return 'w';
   }
-  
+
+///////////////////////////
+// Solve Functions and misc
+///////////////////////////
+
 void returnToSolvedState(){
  String [][] x = {
         {"r","r","r","r","r","r","r","r","r"},
@@ -1587,17 +1503,7 @@ void returnToSolvedState(){
    
 }
 
-/////////  
-// Mouse
-////////  
- void mousePressed() {
-  color colour = get(mouseX, mouseY);
-  c[configureColourAt] = colour; 
-  int hue = int(map(hue(c[configureColourAt]), 0, 255, 0, 180));
-  hues[colorToChange] = hue;
-  println("color index " + (configureColourAt) + ", value: " + hue);
- }
-
+//Prints Array of strings in the format of a RC face
 void printList(ArrayList<String> colourList2){
   for(int i =0; i < 3; i++){
    System.out.print("|  "); 
@@ -1616,6 +1522,7 @@ void printList(ArrayList<String> colourList2){
   System.out.println();
 }
 
+//Prints 2D Array in the format of a RC face
 void printArray(String[][] colourArray2){
   for(int i =0; i < 3; i++){
    System.out.print("|  "); 
@@ -1634,8 +1541,11 @@ void printArray(String[][] colourArray2){
   System.out.println();
 }
 
+//Uses twophase.jar to solve Cube, this library can be got from http://kociemba.org/
+
   void solve(){
-    
+    //input string for solution method needs to be a 54 vector string
+    //The top face must be entered first, followed by right, front, bottom,left,and back in that order.
     String [][] order = new String[6][9];
     order[0] = colourNames[4];
     order[1] = colourNames[1];
@@ -1651,7 +1561,9 @@ void printArray(String[][] colourArray2){
         cubeString += order[index][j]; 
       }
     }
-    System.out.println(cubeString);
+    
+    //colour names are replaced by their position relative to some front face, in this case red, with blue on top
+    
     cubeString = cubeString.replace('w' , 'L');
     cubeString = cubeString.replace('r' , 'F');
     cubeString = cubeString.replace('g' , 'D');
@@ -1659,11 +1571,127 @@ void printArray(String[][] colourArray2){
     cubeString = cubeString.replace('o' , 'B');
     cubeString = cubeString.replace('b' , 'U');
     
-    System.out.println(cubeString);
-    JOptionPane.showMessageDialog(null, "Cube Definiton String: " + cubeString);
+    //JOptionPane.showMessageDialog(null, "Cube Definiton String: " + cubeString);
     // ++++++++++++++++++++++++ Call Search.solution method from package org.kociemba.twophase ++++++++++++++++++++++++
         String result = Search.solution(cubeString, 24, 5, true);
-        System.out.println(result);
+        System.out.println("Solution : "+result);
         //JOptionPane.showMessageDialog(null, result);
         // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   }
+  //Change face that the moves will be relevant to
+
+void rotateLeft(){
+  String[] temp = colourNames[0];
+  colourNames[0] = colourNames[1];
+  colourNames[1] = colourNames[2];
+  colourNames[2] = colourNames[3];
+  colourNames[3] = temp;
+  clockFace(4);
+  antiClockFace(5);
+}
+
+void rotateRight(){
+  String[] temp = colourNames[0];
+  colourNames[0] = colourNames[3];
+  colourNames[3] = colourNames[2];
+  colourNames[2] = colourNames[1];
+  colourNames[1] = temp;
+  clockFace(5);
+  antiClockFace(4);
+}
+
+void rotateDown(){
+  clockFace(3);
+  antiClockFace(1);
+  String[] temp = new String [9];
+  temp[0] = colourNames[0][0];
+  temp[1] = colourNames[0][1];
+  temp[2] = colourNames[0][2];
+  temp[3] = colourNames[0][3];
+  temp[4] = colourNames[0][4];
+  temp[5] = colourNames[0][5];
+  temp[6] = colourNames[0][6];
+  temp[7] = colourNames[0][7];
+  temp[8] = colourNames[0][8];
+  
+  colourNames[0][0] = colourNames[4][0];
+  colourNames[0][1] = colourNames[4][1];
+  colourNames[0][2] = colourNames[4][2];
+  colourNames[0][3] = colourNames[4][3];
+  colourNames[0][4] = colourNames[4][4];
+  colourNames[0][5] = colourNames[4][5];
+  colourNames[0][6] = colourNames[4][6];
+  colourNames[0][7] = colourNames[4][7];
+  colourNames[0][8] = colourNames[4][8];
+  //far side has opposite numbering 
+  colourNames[4][0] = colourNames[2][8];
+  colourNames[4][1] = colourNames[2][7];
+  colourNames[4][2] = colourNames[2][6];
+  colourNames[4][3] = colourNames[2][5];
+  colourNames[4][4] = colourNames[2][4];
+  colourNames[4][5] = colourNames[2][3];
+  colourNames[4][6] = colourNames[2][2];
+  colourNames[4][7] = colourNames[2][1];
+  colourNames[4][8] = colourNames[2][0];
+  //convert back 
+  colourNames[2][0] = colourNames[5][8];
+  colourNames[2][1] = colourNames[5][7];
+  colourNames[2][2] = colourNames[5][6];
+  colourNames[2][3] = colourNames[5][5];
+  colourNames[2][4] = colourNames[5][4];
+  colourNames[2][5] = colourNames[5][3];
+  colourNames[2][6] = colourNames[5][2];
+  colourNames[2][7] = colourNames[5][1];
+  colourNames[2][8] = colourNames[5][0];
+  //colourNames[4] = colourNames[2];
+  //colourNames[2] = colourNames[5];
+  colourNames[5]=temp;
+}
+
+void rotateUp(){
+  String[] temp = new String [9];
+  temp[0] = colourNames[0][0];
+  temp[1] = colourNames[0][1];
+  temp[2] = colourNames[0][2];
+  temp[3] = colourNames[0][3];
+  temp[4] = colourNames[0][4];
+  temp[5] = colourNames[0][5];
+  temp[6] = colourNames[0][6];
+  temp[7] = colourNames[0][7];
+  temp[8] = colourNames[0][8];
+  
+  colourNames[0][0] = colourNames[5][0];
+  colourNames[0][1] = colourNames[5][1];
+  colourNames[0][2] = colourNames[5][2];
+  colourNames[0][3] = colourNames[5][3];
+  colourNames[0][4] = colourNames[5][4];
+  colourNames[0][5] = colourNames[5][5];
+  colourNames[0][6] = colourNames[5][6];
+  colourNames[0][7] = colourNames[5][7];
+  colourNames[0][8] = colourNames[5][8];
+  
+  colourNames[5][0] = colourNames[2][8];
+  colourNames[5][1] = colourNames[2][7];
+  colourNames[5][2] = colourNames[2][6];
+  colourNames[5][3] = colourNames[2][5];
+  colourNames[5][4] = colourNames[2][4];
+  colourNames[5][5] = colourNames[2][3];
+  colourNames[5][6] = colourNames[2][2];
+  colourNames[5][7] = colourNames[2][1];
+  colourNames[5][8] = colourNames[2][0];
+  //convert back 
+  colourNames[2][0] = colourNames[4][8];
+  colourNames[2][1] = colourNames[4][7];
+  colourNames[2][2] = colourNames[4][6];
+  colourNames[2][3] = colourNames[4][5];
+  colourNames[2][4] = colourNames[4][4];
+  colourNames[2][5] = colourNames[4][3];
+  colourNames[2][6] = colourNames[4][2];
+  colourNames[2][7] = colourNames[4][1];
+  colourNames[2][8] = colourNames[4][0];
+ // colourNames[5] = colourNames[2];
+ // colourNames[2] = colourNames[4];
+  colourNames[4] = temp;
+  clockFace(1);
+  antiClockFace(3);
+}
